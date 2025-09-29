@@ -618,142 +618,143 @@ function EntryDetailsModal({ entry, open, onClose, canEdit }: EntryDetailsModalP
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex min-h-full items-start justify-center overflow-y-auto bg-background/80 px-4 py-6 backdrop-blur sm:items-center sm:py-10"
+      className="fixed inset-0 z-50 overflow-y-auto bg-background/80 backdrop-blur"
       role="dialog"
       aria-modal="true"
       aria-labelledby={labelId}
       onClick={onClose}
     >
-      <Card
-        className="mx-auto grid w-full max-w-2xl grid-rows-[auto,minmax(0,1fr),auto] overflow-hidden max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-4rem)]"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <CardHeader className="space-y-3">
-          <CardTitle id={labelId} className="flex flex-wrap items-baseline gap-2 text-2xl">
-            <span>Entry #{entry.no}</span>
-            <span className="text-base font-normal text-muted-foreground">{entry.agreementNumber}</span>
-          </CardTitle>
-          <CardDescription>
-            Detailed view of the registry entry including borrower information and status.
-          </CardDescription>
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <Badge variant="outline" className={cn('border-0 font-medium', statusStyles[entry.status])}>
-              {entry.status === 'ONGOING'
-                ? 'Active'
-                : entry.status === 'COMPLETED'
-                ? 'Completed'
-                : 'Cancelled'}
-            </Badge>
-            <span className="text-muted-foreground">
-              {entry.date ? new Date(entry.date).toLocaleDateString('en-GB') : '—'}
-            </span>
-            <span className="text-muted-foreground">{formatCurrency(entry.loanAmount)}</span>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6 overflow-y-auto min-h-0 pr-1">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <DetailItem label="Registry No" value={entry.no ?? '—'} />
-            <DetailItem label="Agreement" value={entry.agreementNumber || '—'} />
-            <DetailItem label="Island" value={entry.island || '—'} />
-            <DetailItem label="Branch" value={entry.branch || '—'} />
-            <DetailItem label="Form Number" value={entry.formNumber || '—'} />
-            <DetailItem label="Date" value={entry.date ? new Date(entry.date).toLocaleDateString('en-GB') : '—'} />
-            {entry.dateOfCancelled ? (
-              <DetailItem
-                label="Date Cancelled"
-                value={new Date(entry.dateOfCancelled).toLocaleDateString('en-GB')}
-              />
-            ) : null}
-          </div>
-          <div className="space-y-3">
-            <p className="text-xs font-medium uppercase text-muted-foreground">Borrowers</p>
-            {borrowers.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No borrower details available.</p>
-            ) : (
-              <ul className="space-y-2">
-                {borrowers.map((borrower) => (
-                  <li key={borrower.id ?? borrower.fullName} className="rounded-lg border border-border/60 p-3 text-sm">
-                    <p className="font-medium text-foreground">{borrower.fullName}</p>
-                    {borrower.nationalId ? (
-                      <p className="text-xs text-muted-foreground">{borrower.nationalId}</p>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          {attachmentEntries.length > 0 ? (
+      <div className="flex min-h-full items-start justify-center px-4 py-6 sm:items-center sm:py-10">
+        <Card
+          className="mx-auto grid w-full max-w-2xl grid-rows-[auto,minmax(0,1fr),auto] overflow-hidden max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-4rem)]"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <CardHeader className="space-y-3">
+            <CardTitle id={labelId} className="flex flex-wrap items-baseline gap-2 text-2xl">
+              <span>Entry #{entry.no}</span>
+              <span className="text-base font-normal text-muted-foreground">{entry.agreementNumber}</span>
+            </CardTitle>
+            <CardDescription>
+              Detailed view of the registry entry including borrower information and status.
+            </CardDescription>
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <Badge variant="outline" className={cn('border-0 font-medium', statusStyles[entry.status])}>
+                {entry.status === 'ONGOING'
+                  ? 'Active'
+                  : entry.status === 'COMPLETED'
+                  ? 'Completed'
+                  : 'Cancelled'}
+              </Badge>
+              <span className="text-muted-foreground">
+                {entry.date ? new Date(entry.date).toLocaleDateString('en-GB') : '—'}
+              </span>
+              <span className="text-muted-foreground">{formatCurrency(entry.loanAmount)}</span>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6 overflow-y-auto min-h-0 pr-1">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <DetailItem label="Registry No" value={entry.no ?? '—'} />
+              <DetailItem label="Agreement" value={entry.agreementNumber || '—'} />
+              <DetailItem label="Island" value={entry.island || '—'} />
+              <DetailItem label="Branch" value={entry.branch || '—'} />
+              <DetailItem label="Form Number" value={entry.formNumber || '—'} />
+              <DetailItem label="Date" value={entry.date ? new Date(entry.date).toLocaleDateString('en-GB') : '—'} />
+              {entry.dateOfCancelled ? (
+                <DetailItem
+                  label="Date Cancelled"
+                  value={new Date(entry.dateOfCancelled).toLocaleDateString('en-GB')}
+                />
+              ) : null}
+            </div>
             <div className="space-y-3">
-              <p className="text-xs font-medium uppercase text-muted-foreground">Attachments</p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {attachmentEntries.map(([key, value]) => {
-                  const label = formatAttachmentLabel(key);
-                  const sizeLabel = formatFileSize(value?.size ?? undefined);
-                  return (
-                    <div
-                      key={key}
-                      className="flex flex-col gap-2 rounded-xl border border-border/60 bg-muted/30 p-3 shadow-sm"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                            <FileText className="h-4 w-4 text-muted-foreground" />
-                            {label}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{value?.name || 'Document'}</p>
+              <p className="text-xs font-medium uppercase text-muted-foreground">Borrowers</p>
+              {borrowers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No borrower details available.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {borrowers.map((borrower) => (
+                    <li key={borrower.id ?? borrower.fullName} className="rounded-lg border border-border/60 p-3 text-sm">
+                      <p className="font-medium text-foreground">{borrower.fullName}</p>
+                      {borrower.nationalId ? (
+                        <p className="text-xs text-muted-foreground">{borrower.nationalId}</p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            {attachmentEntries.length > 0 ? (
+              <div className="space-y-3">
+                <p className="text-xs font-medium uppercase text-muted-foreground">Attachments</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {attachmentEntries.map(([key, value]) => {
+                    const label = formatAttachmentLabel(key);
+                    const sizeLabel = formatFileSize(value?.size ?? undefined);
+                    return (
+                      <div
+                        key={key}
+                        className="flex flex-col gap-2 rounded-xl border border-border/60 bg-muted/30 p-3 shadow-sm"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                              {label}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{value?.name || 'Document'}</p>
+                          </div>
+                          <Badge variant="outline" className="border-0 text-[0.65rem] font-semibold uppercase">
+                            {sizeLabel}
+                          </Badge>
                         </div>
-                        <Badge variant="outline" className="border-0 text-[0.65rem] font-semibold uppercase">
-                          {sizeLabel}
-                        </Badge>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            asChild
+                            size="sm"
+                            variant="outline"
+                            className="h-9 flex-1 min-w-[120px]"
+                          >
+                            <a href={value?.dataUrl ?? ''} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="mr-2 h-4 w-4" /> View
+                            </a>
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            className="h-9 flex-1 min-w-[120px]"
+                            onClick={() => {
+                              if (!value?.dataUrl) return;
+                              const link = document.createElement('a');
+                              link.href = value.dataUrl;
+                              link.download = value.name || `${key}.pdf`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }}
+                          >
+                            <Download className="mr-2 h-4 w-4" /> Download
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          asChild
-                          size="sm"
-                          variant="outline"
-                          className="h-9 flex-1 min-w-[120px]"
-                        >
-                          <a href={value?.dataUrl ?? ''} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="mr-2 h-4 w-4" /> View
-                          </a>
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="secondary"
-                          className="h-9 flex-1 min-w-[120px]"
-                          onClick={() => {
-                            if (!value?.dataUrl) return;
-                            const link = document.createElement('a');
-                            link.href = value.dataUrl;
-                            link.download = value.name || `${key}.pdf`;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                          }}
-                        >
-                          <Download className="mr-2 h-4 w-4" /> Download
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ) : null}
-          {entry.address ? (
-            <div className="space-y-1">
-              <p className="text-xs font-medium uppercase text-muted-foreground">Address</p>
-              <p className="text-sm text-foreground">{entry.address}</p>
-            </div>
-          ) : null}
-          {entry.extra ? (
-            <div className="space-y-1">
-              <p className="text-xs font-medium uppercase text-muted-foreground">Additional Notes</p>
-              <p className="text-sm text-foreground whitespace-pre-line">{entry.extra}</p>
-            </div>
-          ) : null}
-        </CardContent>
+            ) : null}
+            {entry.address ? (
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase text-muted-foreground">Address</p>
+                <p className="text-sm text-foreground">{entry.address}</p>
+              </div>
+            ) : null}
+            {entry.extra ? (
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase text-muted-foreground">Additional Notes</p>
+                <p className="text-sm text-foreground whitespace-pre-line">{entry.extra}</p>
+              </div>
+            ) : null}
+          </CardContent>
         <CardFooter className="flex items-center justify-between gap-2">
           {canEdit ? (
             <Button asChild variant="outline">
@@ -767,9 +768,10 @@ function EntryDetailsModal({ entry, open, onClose, canEdit }: EntryDetailsModalP
           </Button>
         </CardFooter>
       </Card>
-    </div>,
-    document.body,
-  );
+    </div>
+  </div>,
+  document.body,
+);
 }
 
 type DetailItemProps = {
