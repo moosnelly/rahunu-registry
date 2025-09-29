@@ -98,8 +98,14 @@ export default function AuditClient() {
   const isEmpty = !isLoading && logs.length === 0;
 
   const normalizeLog = (log: any) => {
+    const rawDetails = log.details ?? null;
+
     const details =
-      typeof log.details === "string" ? log.details : JSON.stringify(log.details, null, 2);
+      rawDetails === null || rawDetails === undefined || rawDetails === "null"
+        ? "No additional details recorded."
+        : typeof rawDetails === "string"
+        ? rawDetails
+        : JSON.stringify(rawDetails, null, 2);
 
     const target = log.targetUser
       ? `User • ${log.targetUser.email}`
@@ -128,7 +134,7 @@ export default function AuditClient() {
         </CardHeader>
         <CardContent className="px-0 pb-0">
           <div className="space-y-4 px-6 py-6">
-            <div className="flex flex-col gap-4 rounded-lg border border-border/60 bg-muted p-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex flex-col gap-4 rounded-lg border border-border/60 bg-muted p-4 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-6">
               <div className="grid w-full gap-4 sm:grid-cols-2 md:grid-cols-3">
                 <div className="space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Entity</p>
@@ -181,7 +187,7 @@ export default function AuditClient() {
                   />
                 </div>
               </div>
-              <div className="flex flex-col gap-2 self-start sm:flex-row sm:justify-end lg:self-auto">
+              <div className="flex flex-col gap-2 self-start sm:flex-row sm:justify-end lg:flex-row lg:items-center lg:justify-end">
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -269,7 +275,7 @@ export default function AuditClient() {
                             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                               Details
                             </p>
-                            <pre className="max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-md bg-muted p-3 text-xs leading-relaxed text-muted-foreground md:max-h-72">
+                            <pre className="max-h-60 overflow-auto whitespace-pre-wrap break-all rounded-md bg-muted/80 p-3 text-xs leading-relaxed text-muted-foreground">
                               {details}
                             </pre>
                           </div>
@@ -279,8 +285,8 @@ export default function AuditClient() {
                   )}
                 </div>
                 <div className="hidden lg:block">
-                  <div className="overflow-x-auto">
-                    <Table>
+                  <div className="w-full overflow-x-auto">
+                    <Table className="min-w-[960px]">
                   <TableHeader className="bg-background/80 backdrop-blur">
                     <TableRow>
                       <TableHead className="w-48">When</TableHead>
@@ -313,7 +319,7 @@ export default function AuditClient() {
 
                           return (
                             <TableRow key={log.id ?? `${log.createdAt}-${idx}`}>
-                              <TableCell className="text-muted-foreground">
+                              <TableCell className="align-top text-muted-foreground">
                                 {log.createdAt
                                   ? new Date(log.createdAt).toLocaleString("en-GB", {
                                       dateStyle: "medium",
@@ -321,7 +327,7 @@ export default function AuditClient() {
                                     })
                                   : "—"}
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="align-top">
                                 <Badge
                                   variant="outline"
                                   className={cn("border-0 font-medium", actionBadgeStyles(log.action || ""))}
@@ -329,10 +335,10 @@ export default function AuditClient() {
                                   {log.action ? formatActionLabel(log.action) : "—"}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="text-muted-foreground">{log.actor?.email ?? "—"}</TableCell>
-                              <TableCell className="text-muted-foreground">{target}</TableCell>
-                              <TableCell>
-                                <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-md bg-muted p-3 text-xs leading-relaxed text-muted-foreground">
+                              <TableCell className="align-top text-muted-foreground">{log.actor?.email ?? "—"}</TableCell>
+                              <TableCell className="align-top text-muted-foreground">{target}</TableCell>
+                              <TableCell className="align-top">
+                                <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded-md bg-muted/80 p-3 text-xs leading-relaxed text-muted-foreground">
                                   {details}
                                 </pre>
                               </TableCell>
