@@ -55,7 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     </div>
                   </header>
                   <main className="flex-1 overflow-y-auto bg-background">
-                    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8 md:peer-data-[state=collapsed]:max-w-7xl sm:peer-data-[state=collapsed]:px-5 lg:peer-data-[state=collapsed]:px-6">
+                    <div className="mx-auto flex w-full max-w-none flex-col gap-6 px-4 py-8 sm:px-6 lg:px-10 xl:px-14 2xl:px-20 sm:peer-data-[state=collapsed]:px-8 lg:peer-data-[state=collapsed]:px-12 xl:peer-data-[state=collapsed]:px-16 2xl:peer-data-[state=collapsed]:px-24">
                       {children}
                     </div>
                   </main>

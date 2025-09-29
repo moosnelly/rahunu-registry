@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Download, PlusCircle, Trash2, X } from 'lucide-react';
+import { Download, PlusCircle, X } from 'lucide-react';
 import type { AttachmentRecord as GenericAttachmentRecord, AttachmentValue as GenericAttachmentValue } from '@/lib/attachments';
 import { sanitizeAttachmentRecord, sanitizeAttachmentValue } from '@/lib/attachments';
 
@@ -173,7 +173,54 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
     }
   }, [attachments, storageKey]);
 
-  useEffect(()=>{ if(mode==='edit' && id){ fetch(`/api/entries/${id}`).then(r=>r.json()).then(e=>{ setData({ no:e.no,address:e.address,extra:e.extra,island:e.island,formNumber:e.formNumber,date:e.date.slice(0,10),branch:e.branch,agreementNumber:e.agreementNumber,status:e.status,loanAmount:Number(e.loanAmount),dateOfCancelled:e.dateOfCancelled?e.dateOfCancelled.slice(0,10):null,borrowers:e.borrowers.map((b:any)=>({fullName:b.fullName,nationalId:b.nationalId})) }); if(e.attachments){ setAttachments(sanitizeAttachmentRecordWithKeys(e.attachments)); } }); } },[mode,id]);
+  useEffect(() => {
+    if (mode !== 'edit' || !id) return;
+
+    const controller = new AbortController();
+
+    const loadEntry = async () => {
+      try {
+        const response = await fetch(`/api/entries/${id}`, { signal: controller.signal });
+        if (!response.ok) throw new Error('Failed to fetch entry');
+        const entry = await response.json();
+
+        setData({
+          no: entry.no ?? 0,
+          address: entry.address ?? '',
+          extra: entry.extra ?? '',
+          island: entry.island ?? '',
+          formNumber: entry.formNumber ?? '',
+          date: entry.date ? entry.date.slice(0, 10) : '',
+          branch: entry.branch ?? '',
+          agreementNumber: entry.agreementNumber ?? '',
+          status: entry.status ?? 'ONGOING',
+          loanAmount: Number(entry.loanAmount) || 0,
+          dateOfCancelled: entry.dateOfCancelled ? entry.dateOfCancelled.slice(0, 10) : null,
+          borrowers: Array.isArray(entry.borrowers) && entry.borrowers.length
+            ? entry.borrowers.map((borrower: any) => ({
+                fullName: borrower.fullName ?? '',
+                nationalId: borrower.nationalId ?? '',
+              }))
+            : [emptyBorrower],
+        });
+
+        if (entry.attachments) {
+          setAttachments(sanitizeAttachmentRecordWithKeys(entry.attachments));
+        }
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Failed to load entry', error);
+          setServerError('Unable to load entry details. Please refresh and try again.');
+        }
+      }
+    };
+
+    void loadEntry();
+
+    return () => {
+      controller.abort();
+    };
+  }, [id, mode]);
   const handleAttachmentChange = async (key: AttachmentKey, event: ChangeEvent<HTMLInputElement>) => {
     const input = event.target;
     const file = input.files?.[0];
@@ -272,7 +319,7 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
     setErrors(null);
     return validateAttachments();
   };
-const submit = async () => {
+  const submit = async () => {
     if (!canWrite) {
       // eslint-disable-next-line no-alert
       alert('Forbidden');
@@ -499,6 +546,166 @@ const submit = async () => {
               const errorMessage = attachmentErrors[key];
               return (
                 <div key={key} className="space-y-2">
-                  <div className="flex flex-col gap-2 rounded-lg border border-border/60 bg-card p-3 shadow-sm">
+                  <div className="flex flex-col gap-2 rounded-lg border border-border/60 bg-card p-4 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor={`attachment-${key}`
+                      <Label htmlFor={`attachment-${key}`} className="text-sm font-medium text-foreground">
+                        {label}
+                      </Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => openFilePicker(key)}
+                      >
+                        <PlusCircle className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="space-y-1 text-xs text-muted-foreground">
+                      {file?.name ? <div className="truncate font-medium text-foreground">{file.name}</div> : <div>No file selected</div>}
+                      {file?.size ? <div>{formatFileSize(file.size)}</div> : null}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => downloadAttachment(file)}
+                        disabled={!file?.dataUrl}
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="flex-1"
+                        onClick={() => removeAttachment(key)}
+                        disabled={!file?.dataUrl}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                    <input
+                      ref={(element) => {
+                        fileInputRefs.current[key] = element;
+                      }}
+                      id={`attachment-${key}`}
+                      type="file"
+                      accept="application/pdf"
+                      className="hidden"
+                      onChange={(event) => handleAttachmentChange(key, event)}
+                    />
+                  </div>
+                  {errorMessage ? <p className="text-xs text-destructive">{errorMessage}</p> : null}
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/40">
+        <CardHeader className="space-y-2 border-b border-border/60">
+          <CardTitle className="text-xl text-foreground">Borrowers</CardTitle>
+          <CardDescription>Capture borrower identities with national ID numbers.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6 pt-6">
+          <div className="flex flex-col gap-4">
+            {data.borrowers.map((borrower, index) => {
+              return (
+                <div
+                  key={`borrower-${index}`}
+                  className="rounded-lg border border-border/60 bg-card p-4 shadow-sm"
+                >
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor={`borrower-name-${index}`}>Full Name</Label>
+                      <Input
+                        id={`borrower-name-${index}`}
+                        value={borrower.fullName}
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          setData((prev) => {
+                            const next = [...prev.borrowers];
+                            next[index] = { ...next[index], fullName: value };
+                            return { ...prev, borrowers: next };
+                          });
+                        }}
+                        placeholder="Aishath Ahmed"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`borrower-nid-${index}`}>National ID</Label>
+                      <Input
+                        id={`borrower-nid-${index}`}
+                        value={borrower.nationalId}
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          setData((prev) => {
+                            const next = [...prev.borrowers];
+                            next[index] = { ...next[index], nationalId: value };
+                            return { ...prev, borrowers: next };
+                          });
+                        }}
+                        placeholder="A123456"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setData((prev) => {
+                          if (prev.borrowers.length === 1) return prev;
+                          return {
+                            ...prev,
+                            borrowers: prev.borrowers.filter((_, borrowerIndex) => borrowerIndex !== index),
+                          };
+                        });
+                      }}
+                      disabled={data.borrowers.length === 1}
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Remove borrower
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setData((prev) => ({ ...prev, borrowers: [...prev.borrowers, emptyBorrower] }));
+            }}
+          >
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add borrower
+          </Button>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            if (typeof window === 'undefined') return;
+            window.sessionStorage.removeItem(storageKey);
+            router.push('/entries');
+          }}
+        >
+          Cancel
+        </Button>
+        <Button type="button" onClick={submit} disabled={disableSubmit}>
+          {loading ? 'Saving…' : mode === 'create' ? 'Create entry' : 'Save changes'}
+        </Button>
+      </div>
+    </div>
+  );
+}

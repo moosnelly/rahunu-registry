@@ -40,8 +40,6 @@
     --container-md: 28rem;
     --container-lg: 32rem;
     --container-2xl: 42rem;
-    --container-6xl: 72rem;
-    --container-7xl: 80rem;
     --text-xs: 0.75rem;
     --text-xs--line-height: calc(1 / 0.75);
     --text-sm: 0.875rem;
@@ -595,14 +593,14 @@
   .max-w-2xl {
     max-width: var(--container-2xl);
   }
-  .max-w-6xl {
-    max-width: var(--container-6xl);
-  }
   .max-w-lg {
     max-width: var(--container-lg);
   }
   .max-w-md {
     max-width: var(--container-md);
+  }
+  .max-w-none {
+    max-width: none;
   }
   .min-w-\(--cell-size\) {
     min-width: var(--cell-size);
@@ -2554,10 +2552,10 @@
       line-height: var(--tw-leading, var(--text-lg--line-height));
     }
   }
-  .sm\:peer-data-\[state\=collapsed\]\:px-5 {
+  .sm\:peer-data-\[state\=collapsed\]\:px-8 {
     @media (width >= 40rem) {
       &:is(:where(.peer)[data-state="collapsed"] ~ *) {
-        padding-inline: calc(var(--spacing) * 5);
+        padding-inline: calc(var(--spacing) * 8);
       }
     }
   }
@@ -2620,13 +2618,6 @@
   .md\:opacity-0 {
     @media (width >= 48rem) {
       opacity: 0%;
-    }
-  }
-  .md\:peer-data-\[state\=collapsed\]\:max-w-7xl {
-    @media (width >= 48rem) {
-      &:is(:where(.peer)[data-state="collapsed"] ~ *) {
-        max-width: var(--container-7xl);
-      }
     }
   }
   .md\:peer-data-\[variant\=inset\]\:m-2 {
@@ -2720,15 +2711,15 @@
       align-self: auto;
     }
   }
-  .lg\:px-8 {
+  .lg\:px-10 {
     @media (width >= 64rem) {
-      padding-inline: calc(var(--spacing) * 8);
+      padding-inline: calc(var(--spacing) * 10);
     }
   }
-  .lg\:peer-data-\[state\=collapsed\]\:px-6 {
+  .lg\:peer-data-\[state\=collapsed\]\:px-12 {
     @media (width >= 64rem) {
       &:is(:where(.peer)[data-state="collapsed"] ~ *) {
-        padding-inline: calc(var(--spacing) * 6);
+        padding-inline: calc(var(--spacing) * 12);
       }
     }
   }
@@ -2740,6 +2731,30 @@
   .xl\:grid-cols-5 {
     @media (width >= 80rem) {
       grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+  .xl\:px-14 {
+    @media (width >= 80rem) {
+      padding-inline: calc(var(--spacing) * 14);
+    }
+  }
+  .xl\:peer-data-\[state\=collapsed\]\:px-16 {
+    @media (width >= 80rem) {
+      &:is(:where(.peer)[data-state="collapsed"] ~ *) {
+        padding-inline: calc(var(--spacing) * 16);
+      }
+    }
+  }
+  .\32 xl\:px-20 {
+    @media (width >= 96rem) {
+      padding-inline: calc(var(--spacing) * 20);
+    }
+  }
+  .\32 xl\:peer-data-\[state\=collapsed\]\:px-24 {
+    @media (width >= 96rem) {
+      &:is(:where(.peer)[data-state="collapsed"] ~ *) {
+        padding-inline: calc(var(--spacing) * 24);
+      }
     }
   }
   .dark\:border-input {
@@ -3579,9 +3594,9 @@ body {
 }
 
 
-/*!*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[2].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[14].oneOf[2].use[2]!./node_modules/next/font/google/target.css?{"path":"src/app/layout.tsx","import":"Inter","arguments":[{"subsets":["latin"],"display":"swap"}],"variableName":"inter"} ***!
-  \*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[2].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[14].oneOf[2].use[2]!./node_modules/next/font/google/target.css?{"path":"src\\app\\layout.tsx","import":"Inter","arguments":[{"subsets":["latin"],"display":"swap"}],"variableName":"inter"} ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 /* cyrillic-ext */
 @font-face {
   font-family: 'Inter';
