@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: rahunu_dev
+      POSTGRES_USER: rahunu
+      POSTGRES_PASSWORD: rahunu
+    volumes:
+      - dbdev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rahunu -d rahunu_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+  web:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -lc "npm install && npx prisma generate && npm run dev"
+    environment:
+      DATABASE_URL: postgres://rahunu:rahunu@db:5432/rahunu_dev?schema=public
+      AUTH_SECRET: ${AUTH_SECRET:-changeme_dev}
+      AUTH_URL: http://localhost:3000
+      NODE_ENV: development
+      UPLOAD_DIR: /app/storage/uploads
+    volumes:
+      - ./:/app
+      - /app/node_modules
+      - uploads_dev:/app/storage/uploads
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  dbdev: {}
+  uploads_dev: {}

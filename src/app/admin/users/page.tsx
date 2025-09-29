@@ -1,0 +1,1 @@
+import { getServerSession } from 'next-auth'; import { authOptions } from '@/auth/options'; import AdminUsersClient from './table'; export default async function Page(){ const s=await getServerSession(authOptions); const r=(s?.user as any)?.role; if(r!=='ADMIN') return <main><h2>Forbidden</h2></main>; return <AdminUsersClient/> }
