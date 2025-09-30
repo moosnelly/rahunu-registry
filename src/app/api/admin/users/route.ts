@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
   await prisma.auditLog.create({
     data: {
       action: AuditAction.USER_CREATED,
-      actorId,
+      ...(actorId && { actorId }),
       targetUserId: user.id,
       details: JSON.stringify({ email: user.email, role: user.role }),
     },

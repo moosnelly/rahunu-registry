@@ -39,7 +39,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   await prisma.auditLog.create({ 
     data: { 
       action: AuditAction.ENTRY_VIEWED, 
-      actorId, 
+      ...(actorId && { actorId }), 
       targetEntryId: item.id, 
       details: JSON.stringify({ 
         entryNo: item.no, 
@@ -79,7 +79,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     }, include: { borrowers: true }
   });
   const diffs = shallowDiff(before, updated);
-  await prisma.auditLog.create({ data: { action: AuditAction.ENTRY_UPDATED, actorId, targetEntryId: updated.id, details: JSON.stringify({ changes: diffs }) } });
+  await prisma.auditLog.create({ data: { action: AuditAction.ENTRY_UPDATED, ...(actorId && { actorId }), targetEntryId: updated.id, details: JSON.stringify({ changes: diffs }) } });
   return NextResponse.json({ ...updated, attachments });
 }
 
@@ -110,7 +110,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     prisma.auditLog.create({ 
       data: { 
         action: AuditAction.ENTRY_DELETED, 
-        actorId, 
+        ...(actorId && { actorId }), 
         targetEntryId: params.id, 
         details: JSON.stringify({ 
           no: before.no, 

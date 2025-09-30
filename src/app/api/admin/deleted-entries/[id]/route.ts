@@ -43,7 +43,7 @@ export async function PATCH(_: NextRequest, context: RouteContext) {
   await prisma.auditLog.create({
     data: {
       action: AuditAction.ENTRY_RESTORED,
-      actorId,
+      ...(actorId && { actorId }),
       targetEntryId: params.id,
       details: JSON.stringify({
         no: restored.no,
@@ -97,7 +97,7 @@ export async function DELETE(_: NextRequest, context: RouteContext) {
   await prisma.auditLog.create({
     data: {
       action: AuditAction.ENTRY_DELETED,
-      actorId,
+      ...(actorId && { actorId }),
       targetEntryId: null,
       details: JSON.stringify({
         permanentlyDeleted: true,

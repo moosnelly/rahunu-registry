@@ -34,7 +34,10 @@ export const authOptions: NextAuthOptions = {
   },
   events: {
     async signIn({ user }) {
-      try { await prisma.auditLog.create({ data: { action: AuditAction.USER_SIGNED_IN, actorId: user.id as string, targetUserId: user.id as string } }); } catch {}
+      try { 
+        const userId = user.id as string;
+        await prisma.auditLog.create({ data: { action: AuditAction.USER_SIGNED_IN, ...(userId && { actorId: userId }), targetUserId: userId } }); 
+      } catch {}
     }
   },
   pages: { signIn: "/auth/signin" }

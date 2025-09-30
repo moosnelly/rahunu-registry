@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
   await prisma.auditLog.create({
     data: {
       action: AuditAction.SETTINGS_UPDATED,
-      actorId,
+      ...(actorId && { actorId }),
       details: JSON.stringify({
         action: "create",
         category,
