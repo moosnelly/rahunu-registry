@@ -89,7 +89,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
     return [
       {
         name: "System Settings",
-        url: "/admin/users",
+        url: "/admin/settings",
         icon: Settings2,
       },
       {

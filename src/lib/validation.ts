@@ -56,3 +56,16 @@ export const AdminUserUpdateSchema = z
     resetPassword: z.string().min(6).optional(),
   })
   .refine((d) => !!d.role || d.isActive !== undefined || !!d.resetPassword, { message: "No changes provided" });
+
+export const SystemSettingCreateSchema = z.object({
+  category: z.enum(["ISLAND", "BANK_BRANCH", "REGION", "DOCUMENT_TYPE"]),
+  value: z.string().trim().min(1).max(200),
+  displayName: z.string().trim().min(1).max(200).optional().nullable(),
+  sortOrder: z.number().int().default(0),
+});
+
+export const SystemSettingUpdateSchema = z.object({
+  displayName: z.string().trim().min(1).max(200).optional().nullable(),
+  isActive: z.boolean().optional(),
+  sortOrder: z.number().int().optional(),
+});

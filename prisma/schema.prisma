@@ -29,6 +29,14 @@ enum AuditAction {
   ENTRY_UPDATED
   ENTRY_DELETED
   ENTRY_VIEWED
+  SETTINGS_UPDATED
+}
+
+enum SettingCategory {
+  ISLAND
+  BANK_BRANCH
+  REGION
+  DOCUMENT_TYPE
 }
 
 model User {
@@ -134,4 +142,18 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model SystemSetting {
+  id          String          @id @default(cuid())
+  category    SettingCategory
+  value       String
+  displayName String?
+  isActive    Boolean         @default(true)
+  sortOrder   Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([category, value])
+  @@index([category, isActive])
 }
