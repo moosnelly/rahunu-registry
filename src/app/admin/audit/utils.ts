@@ -44,6 +44,8 @@ export const formatAuditDetails = (action: string, details: any): string => {
       return formatEntryUpdatedDetails(parsed);
     case 'ENTRY_DELETED':
       return formatEntryDeletedDetails(parsed);
+    case 'ENTRY_RESTORED':
+      return formatEntryRestoredDetails(parsed);
     case 'USER_ROLE_CHANGED':
       return formatUserRoleChangedDetails(parsed);
     case 'USER_STATUS_CHANGED':
@@ -139,6 +141,19 @@ const formatEntryUpdatedDetails = (details: any): string => {
 };
 
 const formatEntryDeletedDetails = (details: any): string => {
+  if (details.permanentlyDeleted) {
+    const parts = ['Entry permanently deleted (cannot be restored)'];
+    
+    if (details.agreementNumber) {
+      parts.push(`Agreement: ${details.agreementNumber}`);
+    }
+    if (details.borrowersCount) {
+      parts.push(`${details.borrowersCount} borrower${details.borrowersCount > 1 ? 's' : ''}`);
+    }
+    
+    return parts.join(' • ');
+  }
+  
   const parts = ['Entry marked as deleted'];
   
   if (details.agreementNumber) {
@@ -146,6 +161,19 @@ const formatEntryDeletedDetails = (details: any): string => {
   }
   if (details.reason) {
     parts.push(`Reason: ${details.reason}`);
+  }
+  
+  return parts.join(' • ');
+};
+
+const formatEntryRestoredDetails = (details: any): string => {
+  const parts = ['Entry restored from deleted state'];
+  
+  if (details.agreementNumber) {
+    parts.push(`Agreement: ${details.agreementNumber}`);
+  }
+  if (details.no || details.entryNo) {
+    parts.push(`Entry #${details.no || details.entryNo}`);
   }
   
   return parts.join(' • ');

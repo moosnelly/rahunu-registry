@@ -7,7 +7,7 @@ import useSWR from 'swr';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { endOfDay, startOfDay, startOfYear, subDays, format } from 'date-fns';
-import { CalendarIcon, Download, ExternalLink, FileText, History, MoreHorizontal, SearchIcon, XIcon } from 'lucide-react';
+import { CalendarIcon, Download, ExternalLink, FileText, History, MoreHorizontal, SearchIcon, Trash2, XIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -294,6 +294,8 @@ export default function EntriesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [auditEntryId, setAuditEntryId] = useState<string | null>(null);
   const [isAuditOpen, setIsAuditOpen] = useState(false);
+  const [deleteEntryId, setDeleteEntryId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleOpenEntry = (entry: Entry) => {
     setSelectedEntry(entry);
@@ -313,6 +315,32 @@ export default function EntriesPage() {
   const handleCloseAudit = () => {
     setAuditEntryId(null);
     setIsAuditOpen(false);
+  };
+
+  const handleDeleteEntry = async (entryId: string) => {
+    if (!confirm('Are you sure you want to delete this entry? You can restore it later from System Settings.')) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/entries/${entryId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete entry');
+      }
+
+      // Refresh the entries list
+      await data && (window.location.reload());
+    } catch (error) {
+      alert('Failed to delete entry. Please try again.');
+      console.error('Delete error:', error);
+    } finally {
+      setIsDeleting(false);
+      setDeleteEntryId(null);
+    }
   };
 
   const dateLabel = getDatePresetLabel(filters);
@@ -555,6 +583,16 @@ export default function EntriesPage() {
                               {canWrite ? (
                                 <DropdownMenuItem asChild>
                                   <Link href={`/entries/${entry.id}/edit`}>Edit entry</Link>
+                                </DropdownMenuItem>
+                              ) : null}
+                              {canWrite ? (
+                                <DropdownMenuItem 
+                                  onSelect={() => handleDeleteEntry(entry.id)}
+                                  className="gap-2 text-destructive focus:text-destructive"
+                                  disabled={isDeleting}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Delete entry
                                 </DropdownMenuItem>
                               ) : null}
                             </DropdownMenuContent>

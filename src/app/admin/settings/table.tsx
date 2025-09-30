@@ -33,9 +33,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Trash2, Pencil } from 'lucide-react';
+import { Trash2, Pencil, RotateCcw, AlertTriangle } from 'lucide-react';
 
 type SettingCategory = 'ISLAND' | 'BANK_BRANCH' | 'REGION' | 'DOCUMENT_TYPE';
+
+type DeletedEntry = {
+  id: string;
+  no: number;
+  agreementNumber: string;
+  borrowers: { fullName: string }[];
+  island: string;
+  status: string;
+  loanAmount: string;
+  deletedAt: string;
+};
 
 type SystemSetting = {
   id: string;
@@ -85,7 +96,7 @@ const statusBadge = (isActive: boolean) =>
   );
 
 export default function SettingsClient() {
-  const [activeTab, setActiveTab] = useState<SettingCategory>('ISLAND');
+  const [activeTab, setActiveTab] = useState<SettingCategory | 'DELETED_ENTRIES'>('ISLAND');
   const { data, error, isLoading, mutate } = useSWR('/api/admin/settings', fetcher, {
     refreshInterval: 30_000,
   });
@@ -108,6 +119,15 @@ export default function SettingsClient() {
   });
   const [editError, setEditError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Deleted entries state
+  const { data: deletedData, error: deletedError, isLoading: deletedLoading, mutate: mutateDeleted } = useSWR(
+    '/api/admin/deleted-entries',
+    fetcher,
+    { refreshInterval: 30_000 }
+  );
+  const deletedEntries = (deletedData?.items || []) as DeletedEntry[];
+  const [busyEntry, setBusyEntry] = useState<string | null>(null);
 
   // Filter settings by active tab
   const filteredSettings = useMemo(
@@ -244,6 +264,64 @@ export default function SettingsClient() {
     }
   };
 
+  const handleRestoreEntry = async (entryId: string, agreementNumber: string) => {
+    if (!confirm(`Are you sure you want to restore entry "${agreementNumber}"?`)) {
+      return;
+    }
+
+    setBusyEntry(entryId);
+    try {
+      const res = await fetch(`/api/admin/deleted-entries/${entryId}`, {
+        method: 'PATCH',
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to restore entry');
+      }
+
+      alert('Entry restored successfully!');
+      mutateDeleted();
+    } catch (error) {
+      alert('Failed to restore entry. Please try again.');
+      console.error('Restore error:', error);
+    } finally {
+      setBusyEntry(null);
+    }
+  };
+
+  const handlePermanentDelete = async (entryId: string, agreementNumber: string) => {
+    if (!confirm(
+      `⚠️ PERMANENT DELETE WARNING\n\nAre you sure you want to permanently delete entry "${agreementNumber}"?\n\nThis action CANNOT be undone. All data including borrower information and attachments will be permanently removed.\n\nType the agreement number to confirm: ${agreementNumber}`
+    )) {
+      return;
+    }
+
+    const userInput = prompt(`Type "${agreementNumber}" to confirm permanent deletion:`);
+    if (userInput !== agreementNumber) {
+      alert('Deletion cancelled. Agreement number did not match.');
+      return;
+    }
+
+    setBusyEntry(entryId);
+    try {
+      const res = await fetch(`/api/admin/deleted-entries/${entryId}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to permanently delete entry');
+      }
+
+      alert('Entry permanently deleted.');
+      mutateDeleted();
+    } catch (error) {
+      alert('Failed to delete entry. Please try again.');
+      console.error('Delete error:', error);
+    } finally {
+      setBusyEntry(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
@@ -253,14 +331,120 @@ export default function SettingsClient() {
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as SettingCategory)}>
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as SettingCategory | 'DELETED_ENTRIES')}>
+        <TabsList className="grid w-full grid-cols-5">
           {(Object.keys(categoryLabels) as SettingCategory[]).map((category) => (
             <TabsTrigger key={category} value={category}>
               {categoryLabels[category]}
             </TabsTrigger>
           ))}
+          <TabsTrigger value="DELETED_ENTRIES">
+            Deleted Entries
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="DELETED_ENTRIES" className="space-y-6">
+          <Card>
+            <CardHeader className="border-b border-border/60">
+              <CardTitle className="text-xl text-foreground">Deleted Entries</CardTitle>
+              <CardDescription>
+                Restore or permanently delete registry entries that have been soft-deleted.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0">
+              {deletedError ? (
+                <div className="py-12 text-center text-sm text-destructive">
+                  Unable to load deleted entries. Please retry shortly.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader className="bg-background/80 backdrop-blur">
+                    <TableRow>
+                      <TableHead className="w-16">No</TableHead>
+                      <TableHead>Agreement</TableHead>
+                      <TableHead>Borrower(s)</TableHead>
+                      <TableHead>Island</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Deleted</TableHead>
+                      <TableHead className="w-48 text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {deletedLoading ? (
+                      Array.from({ length: 5 }).map((_, rowIdx) => (
+                        <TableRow key={rowIdx}>
+                          {Array.from({ length: 7 }).map((__, cellIdx) => (
+                            <TableCell key={cellIdx}>
+                              <Skeleton className="h-5 w-full" />
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : deletedEntries.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">
+                          No deleted entries found.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      deletedEntries.map((entry) => {
+                        const borrowerCount = entry.borrowers?.length ?? 0;
+                        const topBorrower = entry.borrowers?.[0]?.fullName ?? '—';
+                        const additional = borrowerCount > 1 ? `+${borrowerCount - 1} more` : '';
+                        const amount = Number(entry.loanAmount).toLocaleString('en-MV', {
+                          style: 'currency',
+                          currency: 'MVR',
+                          minimumFractionDigits: 2,
+                        });
+                        const deletedDate = entry.deletedAt
+                          ? new Date(entry.deletedAt).toLocaleDateString('en-GB')
+                          : '—';
+
+                        return (
+                          <TableRow key={entry.id}>
+                            <TableCell className="text-muted-foreground">{entry.no}</TableCell>
+                            <TableCell className="font-medium">{entry.agreementNumber}</TableCell>
+                            <TableCell className="text-muted-foreground">
+                              <span>{topBorrower}</span>{' '}
+                              <span className="text-xs text-muted-foreground/80">{additional}</span>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{entry.island}</TableCell>
+                            <TableCell className="font-medium">{amount}</TableCell>
+                            <TableCell className="text-muted-foreground text-sm">{deletedDate}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={busyEntry === entry.id}
+                                  onClick={() => handleRestoreEntry(entry.id, entry.agreementNumber)}
+                                  className="gap-2"
+                                >
+                                  <RotateCcw className="h-4 w-4" />
+                                  Restore
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={busyEntry === entry.id}
+                                  onClick={() => handlePermanentDelete(entry.id, entry.agreementNumber)}
+                                  className="gap-2 text-destructive hover:text-destructive"
+                                >
+                                  <AlertTriangle className="h-4 w-4" />
+                                  Delete Forever
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {(Object.keys(categoryLabels) as SettingCategory[]).map((category) => (
           <TabsContent key={category} value={category} className="space-y-6">
