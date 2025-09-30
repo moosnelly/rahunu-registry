@@ -83,7 +83,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   return NextResponse.json({ ...updated, attachments });
 }
 
-export async function DELETE(_: NextRequest, context: RouteContext) {
+export async function DELETE(req: NextRequest, context: RouteContext) {
   const params = await context.params;
   const session = await getServerSession(authOptions);
   const role = (session?.user as any)?.role;
@@ -93,7 +93,34 @@ export async function DELETE(_: NextRequest, context: RouteContext) {
   const before = await prisma.registryEntry.findUnique({ where: { id: params.id } });
   if (!before) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  await prisma.registryEntry.update({ where: { id: params.id }, data: { isDeleted: true, deletedAt: new Date() } });
-  await prisma.auditLog.create({ data: { action: AuditAction.ENTRY_DELETED, actorId, targetEntryId: params.id, details: JSON.stringify({ no: before.no, agreementNumber: before.agreementNumber }) } });
+  // Parse request body to get deletion reason
+  const body = await req.json().catch(() => ({}));
+  const reason = body.reason?.trim();
+  
+  if (!reason) {
+    return NextResponse.json({ error: "Deletion reason is required" }, { status: 400 });
+  }
+
+  // Use a transaction to ensure both operations succeed or fail together
+  await prisma.$transaction([
+    prisma.registryEntry.update({ 
+      where: { id: params.id }, 
+      data: { isDeleted: true, deletedAt: new Date() } 
+    }),
+    prisma.auditLog.create({ 
+      data: { 
+        action: AuditAction.ENTRY_DELETED, 
+        actorId, 
+        targetEntryId: params.id, 
+        details: JSON.stringify({ 
+          no: before.no, 
+          agreementNumber: before.agreementNumber,
+          reason: reason,
+          deletedBy: (session?.user as any)?.email || 'Unknown'
+        }) 
+      } 
+    })
+  ]);
+  
   return NextResponse.json({ ok: true });
 }

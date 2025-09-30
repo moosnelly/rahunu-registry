@@ -7,9 +7,10 @@ import useSWR from 'swr';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { endOfDay, startOfDay, startOfYear, subDays, format } from 'date-fns';
-import { CalendarIcon, Download, Edit, ExternalLink, Eye, FileText, History, MoreHorizontal, SearchIcon, Trash2, XIcon } from 'lucide-react';
+import { CalendarIcon, Download, Edit, ExternalLink, FileText, History, MoreHorizontal, SearchIcon, Trash2, XIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
@@ -294,7 +295,8 @@ export default function EntriesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [auditEntryId, setAuditEntryId] = useState<string | null>(null);
   const [isAuditOpen, setIsAuditOpen] = useState(false);
-  const [deleteEntryId, setDeleteEntryId] = useState<string | null>(null);
+  const [deleteEntry, setDeleteEntry] = useState<Entry | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleOpenEntry = (entry: Entry) => {
@@ -317,21 +319,34 @@ export default function EntriesPage() {
     setIsAuditOpen(false);
   };
 
-  const handleDeleteEntry = async (entryId: string) => {
-    if (!confirm('Are you sure you want to delete this entry? You can restore it later from System Settings.')) {
-      return;
-    }
+  const handleOpenDeleteDialog = (entry: Entry) => {
+    setDeleteEntry(entry);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteEntry(null);
+    setIsDeleteDialogOpen(false);
+  };
+
+  const handleConfirmDelete = async (reason: string) => {
+    if (!deleteEntry) return;
 
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/entries/${entryId}`, {
+      const response = await fetch(`/api/entries/${deleteEntry.id}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason }),
       });
 
       if (!response.ok) {
         throw new Error('Failed to delete entry');
       }
 
+      handleCloseDeleteDialog();
       // Refresh the entries list
       await data && (window.location.reload());
     } catch (error) {
@@ -339,7 +354,6 @@ export default function EntriesPage() {
       console.error('Delete error:', error);
     } finally {
       setIsDeleting(false);
-      setDeleteEntryId(null);
     }
   };
 
@@ -593,9 +607,8 @@ export default function EntriesPage() {
                               ) : null}
                               {canWrite ? (
                                 <DropdownMenuItem 
-                                  onSelect={() => handleDeleteEntry(entry.id)}
+                                  onSelect={() => handleOpenDeleteDialog(entry)}
                                   className="gap-2 text-destructive focus:text-destructive"
-                                  disabled={isDeleting}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                   Delete entry
@@ -669,6 +682,13 @@ export default function EntriesPage() {
       </Card>
       <EntryDetailsModal entry={selectedEntry} open={isModalOpen} onClose={handleCloseModal} canEdit={canWrite} />
       <EntryAuditDialog entryId={auditEntryId} open={isAuditOpen} onClose={handleCloseAudit} />
+      <DeleteConfirmationDialog
+        entry={deleteEntry}
+        open={isDeleteDialogOpen}
+        onClose={handleCloseDeleteDialog}
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }
@@ -894,6 +914,122 @@ function DetailItem({ label, value }: DetailItemProps) {
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="text-sm text-foreground">{value ?? '—'}</p>
     </div>
+  );
+}
+
+type DeleteConfirmationDialogProps = {
+  entry: Entry | null;
+  open: boolean;
+  onClose: () => void;
+  onConfirm: (reason: string) => void;
+  isDeleting: boolean;
+};
+
+function DeleteConfirmationDialog({ entry, open, onClose, onConfirm, isDeleting }: DeleteConfirmationDialogProps) {
+  const [reason, setReason] = useState('');
+  
+  // Reset reason when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setReason('');
+    }
+  }, [open]);
+
+  if (!entry) return null;
+
+  const handleConfirm = () => {
+    if (reason.trim()) {
+      onConfirm(reason.trim());
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(nextOpen) => (!nextOpen ? onClose() : null)}>
+      <DialogContent className="sm:max-w-[540px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-destructive">
+            <Trash2 className="h-5 w-5" />
+            Delete Entry
+          </DialogTitle>
+          <DialogDescription className="pt-2">
+            Are you sure you want to delete this entry? This action can be reversed later from System Settings.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="rounded-lg border border-border/60 bg-muted/30 p-4 space-y-2">
+            <div className="flex items-baseline gap-2">
+              <span className="text-xs font-medium uppercase text-muted-foreground">Entry</span>
+              <span className="text-sm font-semibold text-foreground">#{entry.no}</span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xs font-medium uppercase text-muted-foreground">Agreement</span>
+              <span className="text-sm font-medium text-foreground">{entry.agreementNumber}</span>
+            </div>
+            {entry.borrowers && entry.borrowers.length > 0 && (
+              <div className="flex items-baseline gap-2">
+                <span className="text-xs font-medium uppercase text-muted-foreground">Borrower</span>
+                <span className="text-sm text-foreground">{entry.borrowers[0].fullName}</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="delete-reason" className="text-sm font-medium">
+              Reason for Deletion <span className="text-destructive">*</span>
+            </Label>
+            <textarea
+              id="delete-reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Please provide a reason for deleting this entry..."
+              className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+              disabled={isDeleting}
+              required
+            />
+            {reason.trim().length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {reason.trim().length} characters
+              </p>
+            )}
+          </div>
+
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/50 dark:bg-amber-950/20">
+            <p className="text-sm text-amber-900 dark:text-amber-200">
+              <strong>Note:</strong> The entry will be soft-deleted and can be restored by an administrator from the System Settings page.
+            </p>
+          </div>
+        </div>
+        <div className="flex justify-end gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isDeleting}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleConfirm}
+            disabled={isDeleting || !reason.trim()}
+            className="gap-2"
+          >
+            {isDeleting ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Deleting...
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4" />
+                Delete Entry
+              </>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

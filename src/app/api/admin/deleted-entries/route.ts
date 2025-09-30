@@ -15,7 +15,18 @@ export async function GET(req: NextRequest) {
 
   const deletedEntries = await prisma.registryEntry.findMany({
     where: { isDeleted: true },
-    include: { borrowers: true },
+    include: { 
+      borrowers: true,
+      auditLogs: {
+        where: { action: 'ENTRY_DELETED' },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: {
+          details: true,
+          action: true,
+        }
+      }
+    },
     orderBy: { deletedAt: "desc" },
   });
 

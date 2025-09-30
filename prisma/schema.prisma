@@ -79,8 +79,8 @@ model RegistryEntry {
   deletedAt        DateTime?
   createdById      String?
   updatedById      String?
-  createdBy        User?        @relation("createdByUser", fields: [createdById], references: [id])
-  updatedBy        User?        @relation("updatedByUser", fields: [updatedById], references: [id])
+  createdBy        User?        @relation("createdByUser", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy        User?        @relation("updatedByUser", fields: [updatedById], references: [id], onDelete: SetNull)
   auditLogs        AuditLog[]   @relation("audit_target_entry")
 }
 
@@ -98,11 +98,11 @@ model AuditLog {
   id             String         @id @default(cuid())
   action         AuditAction
   actorId        String?
-  actor          User?          @relation("audit_actor", fields: [actorId], references: [id])
+  actor          User?          @relation("audit_actor", fields: [actorId], references: [id], onDelete: SetNull)
   targetUserId   String?
-  targetUser     User?          @relation("audit_target_user", fields: [targetUserId], references: [id])
+  targetUser     User?          @relation("audit_target_user", fields: [targetUserId], references: [id], onDelete: SetNull)
   targetEntryId  String?
-  targetEntry    RegistryEntry? @relation("audit_target_entry", fields: [targetEntryId], references: [id])
+  targetEntry    RegistryEntry? @relation("audit_target_entry", fields: [targetEntryId], references: [id], onDelete: SetNull)
   details        String?
   createdAt      DateTime       @default(now())
 

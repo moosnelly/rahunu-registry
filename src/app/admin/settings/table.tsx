@@ -46,6 +46,10 @@ type DeletedEntry = {
   status: string;
   loanAmount: string;
   deletedAt: string;
+  auditLogs?: Array<{
+    details: string | null;
+    action: string;
+  }>;
 };
 
 type SystemSetting = {
@@ -365,6 +369,7 @@ export default function SettingsClient() {
                       <TableHead>Borrower(s)</TableHead>
                       <TableHead>Island</TableHead>
                       <TableHead>Amount</TableHead>
+                      <TableHead>Reason</TableHead>
                       <TableHead>Deleted</TableHead>
                       <TableHead className="w-48 text-right">Actions</TableHead>
                     </TableRow>
@@ -373,7 +378,7 @@ export default function SettingsClient() {
                     {deletedLoading ? (
                       Array.from({ length: 5 }).map((_, rowIdx) => (
                         <TableRow key={rowIdx}>
-                          {Array.from({ length: 7 }).map((__, cellIdx) => (
+                          {Array.from({ length: 8 }).map((__, cellIdx) => (
                             <TableCell key={cellIdx}>
                               <Skeleton className="h-5 w-full" />
                             </TableCell>
@@ -382,7 +387,7 @@ export default function SettingsClient() {
                       ))
                     ) : deletedEntries.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">
+                        <TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">
                           No deleted entries found.
                         </TableCell>
                       </TableRow>
@@ -399,6 +404,17 @@ export default function SettingsClient() {
                         const deletedDate = entry.deletedAt
                           ? new Date(entry.deletedAt).toLocaleDateString('en-GB')
                           : '—';
+                        
+                        // Extract deletion reason from audit log
+                        let deletionReason = '—';
+                        if (entry.auditLogs && entry.auditLogs.length > 0) {
+                          try {
+                            const details = JSON.parse(entry.auditLogs[0].details || '{}');
+                            deletionReason = details.reason || '—';
+                          } catch {
+                            deletionReason = '—';
+                          }
+                        }
 
                         return (
                           <TableRow key={entry.id}>
@@ -410,6 +426,11 @@ export default function SettingsClient() {
                             </TableCell>
                             <TableCell className="text-muted-foreground">{entry.island}</TableCell>
                             <TableCell className="font-medium">{amount}</TableCell>
+                            <TableCell className="text-muted-foreground text-sm max-w-[200px]">
+                              <span className="line-clamp-2" title={deletionReason}>
+                                {deletionReason}
+                              </span>
+                            </TableCell>
                             <TableCell className="text-muted-foreground text-sm">{deletedDate}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-1">

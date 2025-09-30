@@ -154,16 +154,23 @@ const formatEntryDeletedDetails = (details: any): string => {
     return parts.join(' • ');
   }
   
-  const parts = ['Entry marked as deleted'];
+  const parts: string[] = [];
   
   if (details.agreementNumber) {
-    parts.push(`Agreement: ${details.agreementNumber}`);
-  }
-  if (details.reason) {
-    parts.push(`Reason: ${details.reason}`);
+    parts.push(`Entry #${details.no || ''} (${details.agreementNumber}) marked as deleted`);
+  } else {
+    parts.push('Entry marked as deleted');
   }
   
-  return parts.join(' • ');
+  if (details.reason) {
+    parts.push(`\n\nReason: ${details.reason}`);
+  }
+  
+  if (details.deletedBy) {
+    parts.push(`\nDeleted by: ${details.deletedBy}`);
+  }
+  
+  return parts.join('');
 };
 
 const formatEntryRestoredDetails = (details: any): string => {
