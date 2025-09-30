@@ -150,6 +150,10 @@ export default function SettingsClient() {
   const [entryToDelete, setEntryToDelete] = useState<{ id: string; agreementNumber: string } | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
+  // Delete setting dialog state
+  const [deleteSettingDialogOpen, setDeleteSettingDialogOpen] = useState(false);
+  const [settingToDelete, setSettingToDelete] = useState<{ id: string; value: string } | null>(null);
+
   // Filter settings by active tab
   const filteredSettings = useMemo(
     () => settings.filter((s) => s.category === activeTab),
@@ -171,24 +175,42 @@ export default function SettingsClient() {
     });
     setBusy(null);
     if (!res.ok) {
-      alert('Error updating setting');
+      // Error will be visible through UI feedback
+      console.error('Error updating setting');
     } else {
       mutate();
     }
   };
 
-  const deleteSetting = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this setting?')) return;
+  const openDeleteSettingDialog = (id: string, value: string) => {
+    setSettingToDelete({ id, value });
+    setDeleteSettingDialogOpen(true);
+  };
+
+  const closeDeleteSettingDialog = () => {
+    setDeleteSettingDialogOpen(false);
+    setSettingToDelete(null);
+  };
+
+  const deleteSetting = async () => {
+    if (!settingToDelete) return;
     
-    setBusy(id);
-    const res = await fetch(`/api/admin/settings/${id}`, {
-      method: 'DELETE',
-    });
-    setBusy(null);
-    if (!res.ok) {
-      alert('Error deleting setting');
-    } else {
+    setBusy(settingToDelete.id);
+    try {
+      const res = await fetch(`/api/admin/settings/${settingToDelete.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!res.ok) {
+        throw new Error('Failed to delete setting');
+      }
+      
+      closeDeleteSettingDialog();
       mutate();
+    } catch (error) {
+      console.error('Delete error:', error);
+    } finally {
+      setBusy(null);
     }
   };
 
@@ -311,7 +333,6 @@ export default function SettingsClient() {
       closeRestoreDialog();
       mutateDeleted();
     } catch (error) {
-      alert('Failed to restore entry. Please try again.');
       console.error('Restore error:', error);
     } finally {
       setBusyEntry(null);
@@ -350,7 +371,6 @@ export default function SettingsClient() {
       closeDeleteDialog();
       mutateDeleted();
     } catch (error) {
-      alert('Failed to delete entry. Please try again.');
       console.error('Delete error:', error);
     } finally {
       setBusyEntry(null);
@@ -660,7 +680,7 @@ export default function SettingsClient() {
                                   variant="ghost"
                                   size="sm"
                                   disabled={busy === setting.id}
-                                  onClick={() => deleteSetting(setting.id)}
+                                  onClick={() => openDeleteSettingDialog(setting.id, setting.value)}
                                 >
                                   <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
@@ -880,6 +900,61 @@ export default function SettingsClient() {
               variant="destructive"
             >
               {busyEntry !== null ? 'Deleting…' : 'Delete Forever'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Setting Dialog */}
+      <Dialog open={deleteSettingDialogOpen} onOpenChange={setDeleteSettingDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Setting</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this setting? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {settingToDelete && (
+              <div className="rounded-lg border border-border bg-muted/50 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-destructive/15 p-2">
+                    <Trash2 className="h-5 w-5 text-destructive" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium text-foreground">
+                      Setting Value
+                    </p>
+                    <p className="text-lg font-semibold text-foreground">
+                      {settingToDelete.value}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <p className="text-sm text-muted-foreground">
+              Deleting this setting may affect existing entries that reference it. Make sure this setting is no longer in use before deleting.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeDeleteSettingDialog}
+              disabled={busy !== null}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              onClick={deleteSetting} 
+              disabled={busy !== null}
+              variant="destructive"
+            >
+              {busy !== null ? 'Deleting…' : 'Delete Setting'}
             </Button>
           </DialogFooter>
         </DialogContent>
