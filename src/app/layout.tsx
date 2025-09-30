@@ -15,7 +15,7 @@ import AuthProvider from "@/providers/AuthProvider";
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Rahunu Registry",
+  title: "Secretariat of Addu City Council",
   description: "Loan registry management portal",
 };
 
@@ -44,10 +44,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                       <SidebarTrigger className="-ml-1" />
                       <Separator orientation="vertical" className="h-6" />
                       <Link href="/dashboard" className="flex items-center gap-2">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
-                          RR
-                        </div>
-                        <span className="text-base font-semibold sm:text-lg">Rahunu Registry</span>
+                        <img src="/addu-logo.png" alt="City of Addu Logo" className="h-9 w-auto" />
+                        <span className="text-base font-semibold sm:text-lg">Secretariat of Addu City Council</span>
                       </Link>
                     </div>
                     <div className="flex items-center gap-2">
@@ -65,10 +63,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <div className="flex min-h-screen flex-col bg-background">
                 <header className="flex items-center justify-center px-6 py-10">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground">
-                      RR
-                    </div>
-                    <span className="text-lg font-semibold">Rahunu Registry</span>
+                    <img src="/addu-logo.png" alt="City of Addu Logo" className="h-10 w-auto" />
+                    <span className="text-lg font-semibold">Secretariat of Addu City Council</span>
                   </div>
                 </header>
                 <main className="flex flex-1 items-center justify-center px-4 pb-16">

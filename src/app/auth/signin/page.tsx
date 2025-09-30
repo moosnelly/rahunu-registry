@@ -49,7 +49,7 @@ export default function SignInPage() {
       <Card className="border-none shadow-xl shadow-sky-900/5">
         <CardHeader className="space-y-2 text-center">
           <CardTitle className="text-3xl font-semibold text-slate-900">Welcome Back</CardTitle>
-          <p className="text-sm text-slate-500">Log in with your credentials to access Rahunu Registry.</p>
+          <p className="text-sm text-slate-500">Log in with your credentials to access Secretariat of Addu City Council.</p>
         </CardHeader>
         <CardContent className="space-y-6">
           <form className="space-y-4" onSubmit={handleSubmit}>

@@ -338,7 +338,7 @@ export default function EntriesPage() {
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold text-foreground">Registry Entries</h1>
           <p className="text-sm text-muted-foreground">
-            Browse the national Rahunu registry, filter for borrowers, and manage loan agreements.
+            Browse the registry, filter for borrowers, and manage loan agreements.
           </p>
         </div>
         {canWrite ? (

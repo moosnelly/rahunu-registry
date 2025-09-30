@@ -251,7 +251,7 @@ export default function ReportsPage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold text-foreground">Generate Reports</h1>
         <p className="text-sm text-muted-foreground">
-          Customize and export Rahunu registry reports with the filters you need.
+          Customize and export registry reports with the filters you need.
         </p>
       </div>
 
@@ -439,7 +439,7 @@ export default function ReportsPage() {
         </CardContent>
         <CardFooter className="flex flex-col-reverse gap-3 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">
-            Reports include data from the national Rahunu registry. Filters apply before export.
+            Reports include data from the registry. Filters apply before export.
           </p>
           <div className="flex gap-3">
             <Button
