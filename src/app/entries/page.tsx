@@ -601,6 +601,22 @@ function EntryDetailsModal({ entry, open, onClose, canEdit }: EntryDetailsModalP
     };
   }, [open]);
 
+  // Log entry view when modal opens
+  useEffect(() => {
+    if (!open || !entry) return;
+    
+    const logView = async () => {
+      try {
+        await fetch(`/api/entries/${entry.id}?context=modal`);
+      } catch (error) {
+        // Silently fail - logging is not critical
+        console.error('Failed to log entry view:', error);
+      }
+    };
+    
+    logView();
+  }, [open, entry]);
+
   const attachmentEntries = useMemo(() => {
     if (!entry?.attachments) return [] as [string, EntryAttachment | null | undefined][];
     return Object.entries(entry.attachments).filter(([, value]) => value?.dataUrl);

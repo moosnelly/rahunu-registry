@@ -28,6 +28,7 @@ enum AuditAction {
   ENTRY_CREATED
   ENTRY_UPDATED
   ENTRY_DELETED
+  ENTRY_VIEWED
 }
 
 model User {

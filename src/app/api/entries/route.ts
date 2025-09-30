@@ -168,6 +168,6 @@ export async function POST(req: NextRequest) {
       createdById: actorId, borrowers: { create: data.borrowers.map(b => ({ fullName: b.fullName, nationalId: b.nationalId })) }
     }, include: { borrowers: true }
   });
-  await prisma.auditLog.create({ data: { action: AuditAction.ENTRY_CREATED, actorId, targetEntryId: created.id, details: JSON.stringify({ no: created.no, agreementNumber: created.agreementNumber }) } });
+  await prisma.auditLog.create({ data: { action: AuditAction.ENTRY_CREATED, actorId, targetEntryId: created.id, details: JSON.stringify({ agreementNumber: created.agreementNumber, loanAmount: created.loanAmount.toString(), borrowersCount: created.borrowers.length }) } });
   return NextResponse.json({ ...created, attachments }, { status: 201 });
 }

@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { actionBadgeStyles, formatActionLabel } from './utils';
+import { actionBadgeStyles, formatActionLabel, formatAuditDetails } from './utils';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -61,6 +61,7 @@ const actionGroups = [
       { value: 'ENTRY_CREATED', label: 'Entry created' },
       { value: 'ENTRY_UPDATED', label: 'Entry updated' },
       { value: 'ENTRY_DELETED', label: 'Entry deleted' },
+      { value: 'ENTRY_VIEWED', label: 'Entry viewed' },
     ],
   },
 ] as const;
@@ -100,12 +101,8 @@ export default function AuditClient() {
   const normalizeLog = (log: any) => {
     const rawDetails = log.details ?? null;
 
-    const details =
-      rawDetails === null || rawDetails === undefined || rawDetails === "null"
-        ? "No additional details recorded."
-        : typeof rawDetails === "string"
-        ? rawDetails
-        : JSON.stringify(rawDetails, null, 2);
+    // Use the new user-friendly formatter
+    const details = formatAuditDetails(log.action || '', rawDetails);
 
     const target = log.targetUser
       ? `User • ${log.targetUser.email}`

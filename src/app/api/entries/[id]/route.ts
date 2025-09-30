@@ -23,13 +23,32 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function GET(_: NextRequest, context: RouteContext) {
+export async function GET(req: NextRequest, context: RouteContext) {
   const params = await context.params;
   const session = await getServerSession(authOptions);
   const role = (session?.user as any)?.role;
+  const actorId = (session?.user as any)?.id as string | undefined;
   if (!session || !canRead(role)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const item = await prisma.registryEntry.findFirst({ where: { id: params.id, isDeleted: false }, include: { borrowers: true } });
   if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  
+  // Log entry view with context
+  const { searchParams } = new URL(req.url);
+  const viewContext = searchParams.get('context') || 'view';
+  
+  await prisma.auditLog.create({ 
+    data: { 
+      action: AuditAction.ENTRY_VIEWED, 
+      actorId, 
+      targetEntryId: item.id, 
+      details: JSON.stringify({ 
+        entryNo: item.no, 
+        agreementNumber: item.agreementNumber,
+        viewContext 
+      }) 
+    } 
+  });
+  
   return NextResponse.json({ ...item, attachments: sanitizeAttachmentRecord(item.attachments) });
 }
 
@@ -60,7 +79,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     }, include: { borrowers: true }
   });
   const diffs = shallowDiff(before, updated);
-  await prisma.auditLog.create({ data: { action: AuditAction.ENTRY_UPDATED, actorId, targetEntryId: updated.id, details: JSON.stringify({ changed: diffs }) } });
+  await prisma.auditLog.create({ data: { action: AuditAction.ENTRY_UPDATED, actorId, targetEntryId: updated.id, details: JSON.stringify({ changes: diffs }) } });
   return NextResponse.json({ ...updated, attachments });
 }
 

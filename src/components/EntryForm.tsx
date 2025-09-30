@@ -200,7 +200,7 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
     const loadEntry = async () => {
       setLoadingEntry(true);
       try {
-        const response = await fetch(`/api/entries/${id}`, { signal: controller.signal });
+        const response = await fetch(`/api/entries/${id}?context=edit`, { signal: controller.signal });
         if (!response.ok) throw new Error('Failed to fetch entry');
         const entry = await response.json();
 
