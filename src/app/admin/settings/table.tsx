@@ -33,7 +33,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Trash2, Pencil, RotateCcw, AlertTriangle } from 'lucide-react';
+import { Trash2, Pencil, RotateCcw, AlertTriangle, MapPin, Building2, Map, FileText, Archive } from 'lucide-react';
 
 type SettingCategory = 'ISLAND' | 'BANK_BRANCH' | 'REGION' | 'DOCUMENT_TYPE';
 
@@ -82,6 +82,14 @@ const categoryLabels: Record<SettingCategory, string> = {
   BANK_BRANCH: 'Bank Branches',
   REGION: 'Regions/Atolls',
   DOCUMENT_TYPE: 'Document Types',
+};
+
+const categoryIcons: Record<SettingCategory | 'DELETED_ENTRIES', React.ReactNode> = {
+  ISLAND: <MapPin className="h-4 w-4" />,
+  BANK_BRANCH: <Building2 className="h-4 w-4" />,
+  REGION: <Map className="h-4 w-4" />,
+  DOCUMENT_TYPE: <FileText className="h-4 w-4" />,
+  DELETED_ENTRIES: <Archive className="h-4 w-4" />,
 };
 
 const categoryDescriptions: Record<SettingCategory, string> = {
@@ -359,14 +367,16 @@ export default function SettingsClient() {
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as SettingCategory | 'DELETED_ENTRIES')}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-5 bg-gradient-to-br from-muted/50 to-muted/30">
           {(Object.keys(categoryLabels) as SettingCategory[]).map((category) => (
             <TabsTrigger key={category} value={category}>
-              {categoryLabels[category]}
+              {categoryIcons[category]}
+              <span className="hidden sm:inline">{categoryLabels[category]}</span>
             </TabsTrigger>
           ))}
           <TabsTrigger value="DELETED_ENTRIES">
-            Deleted Entries
+            {categoryIcons.DELETED_ENTRIES}
+            <span className="hidden sm:inline">Deleted Entries</span>
           </TabsTrigger>
         </TabsList>
 
