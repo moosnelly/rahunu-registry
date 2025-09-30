@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import type { FlattenedError } from 'zod';
+import { z } from 'zod';
 import { EntrySchema } from '@/lib/validation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -145,7 +145,7 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
     dateOfCompleted: null,
     borrowers: [emptyBorrower],
   });
-  const [errors, setErrors] = useState<FlattenedError<FormData> | null>(null);
+  const [errors, setErrors] = useState<z.typeToFlattenedError<FormData> | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingEntry, setLoadingEntry] = useState(mode === 'edit');
   const [serverError, setServerError] = useState<string | null>(null);

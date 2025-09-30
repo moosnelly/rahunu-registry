@@ -59,7 +59,7 @@ export function TeamSwitcher({ teams, activeTeamName }: TeamSwitcherProps) {
   const handleSelect = (team: Team) => {
     setActiveTeam(team)
     if (team.url) {
-      router.push(team.url)
+      router.push(team.url as any)
     }
   }
 

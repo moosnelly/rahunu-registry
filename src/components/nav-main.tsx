@@ -60,7 +60,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild tooltip={item.title} isActive={isItemActive}>
-                  <Link href={item.url ?? "#"}>
+                  <Link href={(item.url ?? "#") as any}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
                   </Link>
@@ -89,7 +89,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
                     {childItems.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton asChild isActive={subItem.isActive ?? isPathActive(subItem.url)}>
-                          <Link href={subItem.url}>
+                          <Link href={subItem.url as any}>
                             <span>{subItem.title}</span>
                           </Link>
                         </SidebarMenuSubButton>

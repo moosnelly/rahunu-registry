@@ -84,7 +84,7 @@ export default async function Page() {
 
   const totals = summary?.totals ?? { entries: 0, amount: 0, averageAmount: 0 };
   const breakdownByStatus = allStatuses.map((status) =>
-    summary?.statusBreakdown.find((item) => item.status === status) ?? {
+    summary?.statusBreakdown.find((item: any) => item.status === status) ?? {
       status,
       count: 0,
       totalAmount: 0,
@@ -198,12 +198,13 @@ export default async function Page() {
             ) : (
               breakdownByStatus.map((item) => {
                 const width = item.percentage > 0 ? Math.max(item.percentage, 8) : 0;
+                const status = item.status as Status;
                 return (
                   <div key={item.status} className="space-y-2">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span className={cn("h-2.5 w-2.5 rounded-full", statusAccent[item.status])} aria-hidden />
-                        <span className="text-sm font-medium text-foreground">{statusLabels[item.status]}</span>
+                        <span className={cn("h-2.5 w-2.5 rounded-full", statusAccent[status])} aria-hidden />
+                        <span className="text-sm font-medium text-foreground">{statusLabels[status]}</span>
                         <span className="text-xs text-muted-foreground">{item.percentage.toFixed(1)}%</span>
                       </div>
                       <div className="text-sm font-semibold text-foreground">{formatNumber(item.count)}</div>
@@ -214,7 +215,7 @@ export default async function Page() {
                     </div>
                     <div className="h-2 rounded-full bg-muted">
                       <div
-                        className={cn("h-full rounded-full", statusAccent[item.status])}
+                        className={cn("h-full rounded-full", statusAccent[status])}
                         style={{ width: width ? `${Math.min(width, 100)}%` : "0%" }}
                       />
                     </div>
@@ -235,7 +236,7 @@ export default async function Page() {
               <p className="text-sm text-muted-foreground">Island insights will appear once entries include island details.</p>
             ) : (
               <div className="space-y-3">
-                {topIslands.map((island) => (
+                {topIslands.map((island: any) => (
                   <div key={island.island} className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2">
                     <div className="flex items-center gap-3">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -280,11 +281,12 @@ export default async function Page() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {recentEntries.map((entry) => {
+                  {recentEntries.map((entry: any) => {
                     const borrowerCount = entry.borrowers?.length ?? 0;
                     const borrowerLabel = borrowerCount
                       ? `${entry.borrowers[0]}${borrowerCount > 1 ? ` +${borrowerCount - 1} more` : ""}`
                       : "—";
+                    const entryStatus = entry.status as Status;
 
                     return (
                       <TableRow key={entry.id}>
@@ -299,9 +301,9 @@ export default async function Page() {
                         <TableCell>
                           <Badge
                             variant="outline"
-                            className={cn("border-0 text-xs font-semibold", statusBadgeStyles[entry.status])}
+                            className={cn("border-0 text-xs font-semibold", statusBadgeStyles[entryStatus])}
                           >
-                            {statusLabels[entry.status]}
+                            {statusLabels[entryStatus]}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-medium">{formatCurrency(entry.loanAmount)}</TableCell>

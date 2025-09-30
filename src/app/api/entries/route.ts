@@ -132,15 +132,15 @@ export async function GET(req: NextRequest) {
     }),
   ]);
 
-  const items = entries.map((entry) => ({ ...entry, attachments: sanitizeAttachmentRecord(entry.attachments) }));
+  const items = entries.map((entry: any) => ({ ...entry, attachments: sanitizeAttachmentRecord(entry.attachments) }));
 
   const filters = {
     islands: islands
-      .map((entry) => entry.island)
-      .filter((value): value is string => !!value && value.trim().length > 0),
+      .map((entry: any) => entry.island)
+      .filter((value: any): value is string => !!value && value.trim().length > 0),
     branches: branches
-      .map((entry) => entry.branch)
-      .filter((value): value is string => !!value && value.trim().length > 0),
+      .map((entry: any) => entry.branch)
+      .filter((value: any): value is string => !!value && value.trim().length > 0),
   };
 
   return NextResponse.json({ items, total, page, size, filters });

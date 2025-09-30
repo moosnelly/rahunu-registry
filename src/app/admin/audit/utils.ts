@@ -99,17 +99,23 @@ const formatEntryUpdatedDetails = (details: any): string => {
   }
 
   const changes = details.changes;
-  const parts = ['Updated fields:'];
+  const parts: string[] = [];
   
   Object.entries(changes).forEach(([field, change]: [string, any]) => {
-    const fieldName = formatFieldName(field);
+    const fieldName = formatEntryFieldName(field);
     
     if (change.from !== undefined && change.to !== undefined) {
-      parts.push(`${fieldName}: "${formatValue(change.from)}" → "${formatValue(change.to)}"`);
+      const formattedFrom = formatEntryFieldValue(field, change.from);
+      const formattedTo = formatEntryFieldValue(field, change.to);
+      parts.push(`• ${fieldName}: ${formattedFrom} → ${formattedTo}`);
     } else {
-      parts.push(`${fieldName} was modified`);
+      parts.push(`• ${fieldName} was modified`);
     }
   });
+  
+  if (parts.length === 0) {
+    return 'Entry was updated';
+  }
   
   return parts.join('\n');
 };
@@ -184,5 +190,94 @@ const formatRole = (role: string): string => {
       return 'Viewer';
     default:
       return role;
+  }
+};
+
+const formatEntryFieldName = (field: string): string => {
+  // Map field names to user-friendly labels
+  const fieldLabels: Record<string, string> = {
+    no: 'Registry Number',
+    address: 'Address',
+    island: 'Island',
+    formNumber: 'Form Number',
+    date: 'Date',
+    branch: 'Branch',
+    agreementNumber: 'Agreement Number',
+    status: 'Status',
+    loanAmount: 'Loan Amount',
+    dateOfCancelled: 'Cancellation Date',
+    dateOfCompleted: 'Completion Date',
+    attachments: 'Attachments',
+    isDeleted: 'Deleted Status',
+    deletedAt: 'Deletion Date',
+  };
+  
+  return fieldLabels[field] || formatFieldName(field);
+};
+
+const formatEntryFieldValue = (field: string, value: any): string => {
+  if (value === null || value === undefined) return 'Not set';
+  
+  // Handle specific field types
+  switch (field) {
+    case 'status':
+      return formatStatus(value);
+    
+    case 'loanAmount':
+      if (typeof value === 'string' || typeof value === 'number') {
+        const amount = parseFloat(String(value));
+        if (!isNaN(amount)) {
+          return `MVR ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+      }
+      return String(value);
+    
+    case 'date':
+    case 'dateOfCancelled':
+    case 'dateOfCompleted':
+    case 'deletedAt':
+      return formatDate(value);
+    
+    case 'isDeleted':
+      return value ? 'Deleted' : 'Active';
+    
+    case 'attachments':
+      if (typeof value === 'object' && value !== null) {
+        return 'Document files updated';
+      }
+      return 'Updated';
+    
+    default:
+      return formatValue(value);
+  }
+};
+
+const formatStatus = (status: string): string => {
+  switch (status) {
+    case 'ONGOING':
+      return 'Active';
+    case 'CANCELLED':
+      return 'Cancelled';
+    case 'COMPLETED':
+      return 'Completed';
+    default:
+      return status;
+  }
+};
+
+const formatDate = (value: any): string => {
+  if (!value) return 'Not set';
+  
+  try {
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return String(value);
+    
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  } catch {
+    return String(value);
   }
 };

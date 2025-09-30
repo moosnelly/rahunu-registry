@@ -143,8 +143,8 @@ export const fetchSummary = async (filters: NormalizedReportFilters) => {
   const averageAmount = decimalToNumber(aggregates._avg.loanAmount);
 
   const statusBreakdown = statusGroups
-    .sort((a, b) => b._count._all - a._count._all)
-    .map((group) => ({
+    .sort((a: any, b: any) => b._count._all - a._count._all)
+    .map((group: any) => ({
       status: group.status,
       count: group._count._all,
       totalAmount: decimalToNumber(group._sum.loanAmount),
@@ -152,16 +152,16 @@ export const fetchSummary = async (filters: NormalizedReportFilters) => {
     }));
 
   const topIslands = islandGroups
-    .filter((group) => group.island && group.island.trim().length > 0)
-    .sort((a, b) => b._count._all - a._count._all)
+    .filter((group: any) => group.island && group.island.trim().length > 0)
+    .sort((a: any, b: any) => b._count._all - a._count._all)
     .slice(0, 5)
-    .map((group) => ({
+    .map((group: any) => ({
       island: group.island,
       count: group._count._all,
       totalAmount: decimalToNumber(group._sum.loanAmount),
     }));
 
-  const recent = recentEntries.map((entry) => ({
+  const recent = recentEntries.map((entry: any) => ({
     id: entry.id,
     no: entry.no,
     agreementNumber: entry.agreementNumber,
@@ -170,7 +170,7 @@ export const fetchSummary = async (filters: NormalizedReportFilters) => {
     branch: entry.branch,
     loanAmount: decimalToNumber(entry.loanAmount),
     date: entry.date.toISOString(),
-    borrowers: entry.borrowers.map((borrower) => borrower.fullName),
+    borrowers: entry.borrowers.map((borrower: any) => borrower.fullName),
   }));
 
   return {
@@ -193,10 +193,10 @@ export const fetchDetailedRows = async (filters: NormalizedReportFilters) => {
     orderBy: [{ date: "desc" }, { no: "asc" }],
   });
 
-  return entries.map((entry) => ({
+  return entries.map((entry: any) => ({
     no: entry.no,
     agreementNumber: entry.agreementNumber,
-    borrowers: entry.borrowers.map((borrower) => borrower.fullName),
+    borrowers: entry.borrowers.map((borrower: any) => borrower.fullName),
     status: entry.status,
     island: entry.island,
     branch: entry.branch,
@@ -215,8 +215,8 @@ export const fetchCustomRows = async (filters: NormalizedReportFilters) => {
   });
 
   return groups
-    .sort((a, b) => decimalToNumber(b._sum.loanAmount) - decimalToNumber(a._sum.loanAmount))
-    .map((group) => {
+    .sort((a: any, b: any) => decimalToNumber(b._sum.loanAmount) - decimalToNumber(a._sum.loanAmount))
+    .map((group: any) => {
     const totalAmount = decimalToNumber(group._sum.loanAmount);
     const count = group._count._all;
     return {
@@ -248,7 +248,7 @@ type ReportTable = {
 
 const buildSummaryTable = async (filters: NormalizedReportFilters): Promise<ReportTable> => {
   const summary = await fetchSummary(filters);
-  const rows: (string | number)[][] = summary.statusBreakdown.map((item) => [
+  const rows: (string | number)[][] = summary.statusBreakdown.map((item: any) => [
     item.status,
     formatInteger(item.count),
     formatCurrency(item.totalAmount),
@@ -283,7 +283,7 @@ const buildDetailedTable = async (filters: NormalizedReportFilters): Promise<Rep
       "Loan Amount",
       "Date",
     ],
-    rows: rows.map((row) => [
+    rows: rows.map((row: any) => [
       row.no,
       row.agreementNumber,
       row.borrowers.join("; "),
@@ -301,7 +301,7 @@ const buildCustomTable = async (filters: NormalizedReportFilters): Promise<Repor
   return {
     title: "Registry Branch Performance",
     columns: ["Branch", "Agreements", "Total Amount", "Average Amount"],
-    rows: rows.map((row) => [
+    rows: rows.map((row: any) => [
       row.branch,
       formatInteger(row.count),
       formatCurrency(row.totalAmount),
@@ -327,7 +327,7 @@ const csvEscape = (value: string | number) => {
 const buildCsvBuffer = (table: ReportTable) => {
   const lines = [[table.columns], ...table.rows.map((row) => row.map((value) => String(value)))];
   const serialized = lines
-    .map((row) => row.map((cell) => csvEscape(cell)).join(","))
+    .map((row: any) => row.map((cell: any) => csvEscape(cell)).join(","))
     .join("\r\n");
 
   return Buffer.from(serialized, "utf-8");
