@@ -132,6 +132,15 @@ export default function SettingsClient() {
   );
   const deletedEntries = (deletedData?.items || []) as DeletedEntry[];
   const [busyEntry, setBusyEntry] = useState<string | null>(null);
+  
+  // Restore dialog state
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
+  const [entryToRestore, setEntryToRestore] = useState<{ id: string; agreementNumber: string } | null>(null);
+  
+  // Delete forever dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<{ id: string; agreementNumber: string } | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   // Filter settings by active tab
   const filteredSettings = useMemo(
@@ -268,14 +277,22 @@ export default function SettingsClient() {
     }
   };
 
-  const handleRestoreEntry = async (entryId: string, agreementNumber: string) => {
-    if (!confirm(`Are you sure you want to restore entry "${agreementNumber}"?`)) {
-      return;
-    }
+  const openRestoreDialog = (entryId: string, agreementNumber: string) => {
+    setEntryToRestore({ id: entryId, agreementNumber });
+    setRestoreDialogOpen(true);
+  };
 
-    setBusyEntry(entryId);
+  const closeRestoreDialog = () => {
+    setRestoreDialogOpen(false);
+    setEntryToRestore(null);
+  };
+
+  const handleRestoreEntry = async () => {
+    if (!entryToRestore) return;
+
+    setBusyEntry(entryToRestore.id);
     try {
-      const res = await fetch(`/api/admin/deleted-entries/${entryId}`, {
+      const res = await fetch(`/api/admin/deleted-entries/${entryToRestore.id}`, {
         method: 'PATCH',
       });
 
@@ -283,7 +300,7 @@ export default function SettingsClient() {
         throw new Error('Failed to restore entry');
       }
 
-      alert('Entry restored successfully!');
+      closeRestoreDialog();
       mutateDeleted();
     } catch (error) {
       alert('Failed to restore entry. Please try again.');
@@ -293,22 +310,28 @@ export default function SettingsClient() {
     }
   };
 
-  const handlePermanentDelete = async (entryId: string, agreementNumber: string) => {
-    if (!confirm(
-      `⚠️ PERMANENT DELETE WARNING\n\nAre you sure you want to permanently delete entry "${agreementNumber}"?\n\nThis action CANNOT be undone. All data including borrower information and attachments will be permanently removed.\n\nType the agreement number to confirm: ${agreementNumber}`
-    )) {
+  const openDeleteDialog = (entryId: string, agreementNumber: string) => {
+    setEntryToDelete({ id: entryId, agreementNumber });
+    setDeleteConfirmText('');
+    setDeleteDialogOpen(true);
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+    setEntryToDelete(null);
+    setDeleteConfirmText('');
+  };
+
+  const handlePermanentDelete = async () => {
+    if (!entryToDelete) return;
+
+    if (deleteConfirmText !== entryToDelete.agreementNumber) {
       return;
     }
 
-    const userInput = prompt(`Type "${agreementNumber}" to confirm permanent deletion:`);
-    if (userInput !== agreementNumber) {
-      alert('Deletion cancelled. Agreement number did not match.');
-      return;
-    }
-
-    setBusyEntry(entryId);
+    setBusyEntry(entryToDelete.id);
     try {
-      const res = await fetch(`/api/admin/deleted-entries/${entryId}`, {
+      const res = await fetch(`/api/admin/deleted-entries/${entryToDelete.id}`, {
         method: 'DELETE',
       });
 
@@ -316,7 +339,7 @@ export default function SettingsClient() {
         throw new Error('Failed to permanently delete entry');
       }
 
-      alert('Entry permanently deleted.');
+      closeDeleteDialog();
       mutateDeleted();
     } catch (error) {
       alert('Failed to delete entry. Please try again.');
@@ -438,7 +461,7 @@ export default function SettingsClient() {
                                   variant="ghost"
                                   size="sm"
                                   disabled={busyEntry === entry.id}
-                                  onClick={() => handleRestoreEntry(entry.id, entry.agreementNumber)}
+                                  onClick={() => openRestoreDialog(entry.id, entry.agreementNumber)}
                                   className="gap-2"
                                 >
                                   <RotateCcw className="h-4 w-4" />
@@ -448,7 +471,7 @@ export default function SettingsClient() {
                                   variant="ghost"
                                   size="sm"
                                   disabled={busyEntry === entry.id}
-                                  onClick={() => handlePermanentDelete(entry.id, entry.agreementNumber)}
+                                  onClick={() => openDeleteDialog(entry.id, entry.agreementNumber)}
                                   className="gap-2 text-destructive hover:text-destructive"
                                 >
                                   <AlertTriangle className="h-4 w-4" />
@@ -717,6 +740,136 @@ export default function SettingsClient() {
             </Button>
             <Button type="button" onClick={handleEdit} disabled={saving}>
               {saving ? 'Saving…' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Restore Entry Dialog */}
+      <Dialog open={restoreDialogOpen} onOpenChange={setRestoreDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Restore Entry</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to restore this entry?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {entryToRestore && (
+              <div className="rounded-lg border border-border bg-muted/50 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-blue-500/15 p-2">
+                    <RotateCcw className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium text-foreground">
+                      Agreement Number
+                    </p>
+                    <p className="text-lg font-semibold text-foreground">
+                      {entryToRestore.agreementNumber}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <p className="text-sm text-muted-foreground">
+              This will restore the entry and make it visible in the registry again. All associated data will be preserved.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeRestoreDialog}
+              disabled={busyEntry !== null}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              onClick={handleRestoreEntry} 
+              disabled={busyEntry !== null}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {busyEntry !== null ? 'Restoring…' : 'Restore Entry'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Permanent Delete Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Permanent Delete Warning
+            </DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete the entry and all associated data.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Warning</AlertTitle>
+              <AlertDescription>
+                All data including borrower information, attachments, and audit logs will be permanently removed from the database.
+              </AlertDescription>
+            </Alert>
+
+            {entryToDelete && (
+              <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-destructive/15 p-2">
+                    <Trash2 className="h-5 w-5 text-destructive" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium text-foreground">
+                      Agreement Number
+                    </p>
+                    <p className="text-lg font-semibold text-foreground">
+                      {entryToDelete.agreementNumber}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="delete-confirm" className="text-foreground">
+                Type <span className="font-mono font-semibold">{entryToDelete?.agreementNumber}</span> to confirm
+              </Label>
+              <Input
+                id="delete-confirm"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Enter agreement number"
+                className="font-mono"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeDeleteDialog}
+              disabled={busyEntry !== null}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              onClick={handlePermanentDelete} 
+              disabled={busyEntry !== null || deleteConfirmText !== entryToDelete?.agreementNumber}
+              variant="destructive"
+            >
+              {busyEntry !== null ? 'Deleting…' : 'Delete Forever'}
             </Button>
           </DialogFooter>
         </DialogContent>
