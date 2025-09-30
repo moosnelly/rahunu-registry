@@ -62,32 +62,50 @@ export const formatAuditDetails = (action: string, details: any): string => {
 const formatEntryViewedDetails = (details: any): string => {
   const parts = [];
   
-  if (details.entryNo) {
-    parts.push(`Entry #${details.entryNo}`);
+  if (details.entryNo || details.no) {
+    parts.push(`Entry #${details.entryNo || details.no}`);
   }
   if (details.agreementNumber) {
     parts.push(`Agreement: ${details.agreementNumber}`);
   }
   if (details.viewContext) {
-    const context = details.viewContext === 'modal' ? 'Quick View' : 
-                    details.viewContext === 'edit' ? 'Edit Page' : details.viewContext;
-    parts.push(`Context: ${context}`);
+    const context = details.viewContext === 'modal' ? 'viewed in Quick View modal' : 
+                    details.viewContext === 'edit' ? 'opened in Edit Page' : 
+                    details.viewContext === 'page' ? 'viewed on Details Page' : 
+                    `viewed in ${details.viewContext}`;
+    parts.push(context);
   }
   
-  return parts.length > 0 ? parts.join(' • ') : 'Entry viewed';
+  if (parts.length === 0) return 'Entry viewed';
+  if (parts.length === 1) return parts[0];
+  
+  return parts.join(', ');
 };
 
 const formatEntryCreatedDetails = (details: any): string => {
-  const parts = ['New registry entry created'];
+  const parts: string[] = [];
+  
+  if (details.entryNo || details.no) {
+    parts.push(`Entry #${details.entryNo || details.no} created`);
+  } else {
+    parts.push('New entry created');
+  }
   
   if (details.agreementNumber) {
-    parts.push(`Agreement Number: ${details.agreementNumber}`);
+    parts.push(`Agreement: ${details.agreementNumber}`);
   }
   if (details.loanAmount) {
-    parts.push(`Loan Amount: MVR ${parseFloat(details.loanAmount).toLocaleString()}`);
+    const amount = parseFloat(details.loanAmount);
+    parts.push(`Loan Amount: MVR ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
   }
   if (details.borrowersCount) {
-    parts.push(`Borrowers: ${details.borrowersCount}`);
+    parts.push(`${details.borrowersCount} borrower${details.borrowersCount > 1 ? 's' : ''}`);
+  }
+  if (details.branch) {
+    parts.push(`Branch: ${details.branch}`);
+  }
+  if (details.island) {
+    parts.push(`Island: ${details.island}`);
   }
   
   return parts.join(' • ');

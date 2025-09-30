@@ -41,7 +41,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { actionBadgeStyles, formatActionLabel } from '@/app/admin/audit/utils';
+import { actionBadgeStyles, formatActionLabel, formatAuditDetails } from '@/app/admin/audit/utils';
 
 type EntryAttachment = {
   name?: string | null;
@@ -947,12 +947,7 @@ function EntryAuditDialog({ entryId, open, onClose }: { entryId: string | null; 
             })
           : '—';
         const initials = log.actor?.email?.[0]?.toUpperCase() ?? 'A';
-        const detailText =
-          typeof log.details === 'string'
-            ? log.details
-            : log.details
-            ? JSON.stringify(log.details, null, 2)
-            : '—';
+        const detailText = formatAuditDetails(log.action || '', log.details);
 
         return (
           <li key={log.id ?? `${log.createdAt}-${idx}`} className="relative pl-12">
