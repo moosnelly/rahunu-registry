@@ -626,7 +626,7 @@ function EntryDetailsModal({ entry, open, onClose, canEdit }: EntryDetailsModalP
     >
       <div className="flex min-h-full items-start justify-center px-4 py-6 sm:items-center sm:py-10">
         <Card
-          className="mx-auto grid w-full max-w-2xl grid-rows-[auto,minmax(0,1fr),auto] overflow-hidden max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-4rem)]"
+          className="mx-auto flex w-full max-w-2xl flex-col overflow-hidden max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-4rem)]"
           onClick={(event) => event.stopPropagation()}
         >
           <CardHeader className="space-y-3">
@@ -651,7 +651,7 @@ function EntryDetailsModal({ entry, open, onClose, canEdit }: EntryDetailsModalP
               <span className="text-muted-foreground">{formatCurrency(entry.loanAmount)}</span>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6 overflow-y-auto min-h-0 pr-1">
+          <CardContent className="flex-1 space-y-6 overflow-y-auto min-h-0 pr-1">
             <div className="grid gap-4 sm:grid-cols-2">
               <DetailItem label="Registry No" value={entry.no ?? '—'} />
               <DetailItem label="Agreement" value={entry.agreementNumber || '—'} />

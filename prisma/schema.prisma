@@ -61,6 +61,7 @@ model RegistryEntry {
   status           Status
   loanAmount       Decimal
   dateOfCancelled  DateTime?
+  dateOfCompleted  DateTime?
   attachments      Json?
   borrowers        Borrower[]
   createdAt        DateTime     @default(now())

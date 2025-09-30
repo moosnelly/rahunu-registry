@@ -29,6 +29,7 @@ type FormData = {
   status: 'ONGOING' | 'CANCELLED' | 'COMPLETED';
   loanAmount: number;
   dateOfCancelled?: string | null;
+  dateOfCompleted?: string | null;
   borrowers: Borrower[];
 };
 
@@ -46,29 +47,43 @@ const ATTACHMENT_FIELDS = [
   { key: 'landRegistry', label: 'Land Registry' },
 ] as const;
 
+const CANCELLATION_ATTACHMENT_KEY = 'cancellationBankDocument' as const;
+const COMPLETION_ATTACHMENT_KEY = 'completionBankDocument' as const;
+
 type AttachmentKey = (typeof ATTACHMENT_FIELDS)[number]['key'];
+type CancellationAttachmentKey = typeof CANCELLATION_ATTACHMENT_KEY;
+type CompletionAttachmentKey = typeof COMPLETION_ATTACHMENT_KEY;
+type AllAttachmentKeys = AttachmentKey | CancellationAttachmentKey | CompletionAttachmentKey;
 
 type AttachmentValue = GenericAttachmentValue;
 
-type AttachmentRecord = Pick<GenericAttachmentRecord, AttachmentKey>;
+type AttachmentRecord = Pick<GenericAttachmentRecord, AttachmentKey | CancellationAttachmentKey | CompletionAttachmentKey>;
 
-type AttachmentErrors = Record<AttachmentKey, string | null>;
+type AttachmentErrors = Record<AllAttachmentKeys, string | null>;
 
 const ATTACHMENT_KEYS: AttachmentKey[] = ATTACHMENT_FIELDS.map(({ key }) => key);
 
 const createEmptyAttachmentValue = (): AttachmentValue => sanitizeAttachmentValue(null);
 
-const createEmptyAttachmentRecord = (): AttachmentRecord =>
-  ATTACHMENT_KEYS.reduce((acc, key) => {
+const createEmptyAttachmentRecord = (): AttachmentRecord => {
+  const record = ATTACHMENT_KEYS.reduce((acc, key) => {
     acc[key] = createEmptyAttachmentValue();
     return acc;
   }, {} as AttachmentRecord);
+  record[CANCELLATION_ATTACHMENT_KEY] = createEmptyAttachmentValue();
+  record[COMPLETION_ATTACHMENT_KEY] = createEmptyAttachmentValue();
+  return record;
+};
 
-const createEmptyAttachmentErrors = (): AttachmentErrors =>
-  ATTACHMENT_KEYS.reduce((acc, key) => {
+const createEmptyAttachmentErrors = (): AttachmentErrors => {
+  const errors = ATTACHMENT_KEYS.reduce((acc, key) => {
     acc[key] = null;
     return acc;
-  }, {} as AttachmentErrors);
+  }, {} as any);
+  errors[CANCELLATION_ATTACHMENT_KEY] = null;
+  errors[COMPLETION_ATTACHMENT_KEY] = null;
+  return errors;
+};
 
 const readFileAsDataURL = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -79,9 +94,10 @@ const readFileAsDataURL = (file: File): Promise<string> =>
   });
 
 const sanitizeAttachmentRecordWithKeys = (
-  value: Partial<Record<AttachmentKey, Partial<AttachmentValue>>> | null | undefined,
+  value: Partial<Record<AllAttachmentKeys, Partial<AttachmentValue>>> | null | undefined,
 ): AttachmentRecord => {
-  return sanitizeAttachmentRecord(value ?? undefined, ATTACHMENT_KEYS) as AttachmentRecord;
+  const allKeys = [...ATTACHMENT_KEYS, CANCELLATION_ATTACHMENT_KEY, COMPLETION_ATTACHMENT_KEY];
+  return sanitizeAttachmentRecord(value ?? undefined, allKeys) as AttachmentRecord;
 };
 
 const isPdf = (file: File | null | undefined) =>
@@ -127,6 +143,7 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
     status: 'ONGOING',
     loanAmount: 0,
     dateOfCancelled: null,
+    dateOfCompleted: null,
     borrowers: [emptyBorrower],
   });
   const [errors, setErrors] = useState<FlattenedError<FormData> | null>(null);
@@ -138,10 +155,12 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
   const [totalSize, setTotalSize] = useState(0);
   const [persistenceError, setPersistenceError] = useState<string | null>(null);
   const disableSubmit = useMemo(() => loading || totalSize > MAX_TOTAL_SIZE, [loading, totalSize]);
-  const fileInputRefs = useRef<Record<AttachmentKey, HTMLInputElement | null>>({
+  const fileInputRefs = useRef<Record<AllAttachmentKeys, HTMLInputElement | null>>({
     bankLetter: null,
     agreementDocument: null,
     landRegistry: null,
+    cancellationBankDocument: null,
+    completionBankDocument: null,
   });
 
   useEffect(() => {
@@ -196,6 +215,7 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
           status: entry.status ?? 'ONGOING',
           loanAmount: Number(entry.loanAmount) || 0,
           dateOfCancelled: entry.dateOfCancelled ? entry.dateOfCancelled.slice(0, 10) : null,
+          dateOfCompleted: entry.dateOfCompleted ? entry.dateOfCompleted.slice(0, 10) : null,
           borrowers: Array.isArray(entry.borrowers) && entry.borrowers.length
             ? entry.borrowers.map((borrower: any) => ({
                 fullName: borrower.fullName ?? '',
@@ -221,7 +241,7 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
       controller.abort();
     };
   }, [id, mode]);
-  const handleAttachmentChange = async (key: AttachmentKey, event: ChangeEvent<HTMLInputElement>) => {
+  const handleAttachmentChange = async (key: AllAttachmentKeys, event: ChangeEvent<HTMLInputElement>) => {
     const input = event.target;
     const file = input.files?.[0];
     if (!file) {
@@ -274,7 +294,7 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
     document.body.removeChild(link);
   };
 
-  const removeAttachment = (key: AttachmentKey) => {
+  const removeAttachment = (key: AllAttachmentKeys) => {
     setAttachments((prev) => ({
       ...prev,
       [key]: createEmptyAttachmentValue(),
@@ -284,7 +304,7 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
     if (input) input.value = '';
   };
 
-  const openFilePicker = (key: AttachmentKey) => {
+  const openFilePicker = (key: AllAttachmentKeys) => {
     const input = fileInputRefs.current[key];
     input?.click();
   };
@@ -299,11 +319,34 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
         nextErrors[key] = nextErrors[key] ?? `Combined file size exceeds ${formatFileSize(MAX_TOTAL_SIZE)}.`;
       });
     }
+    
+    // Conditionally require cancellation bank document if status is CANCELLED
+    if (data.status === 'CANCELLED') {
+      const cancellationDoc = attachments.cancellationBankDocument;
+      if (!cancellationDoc.dataUrl) {
+        nextErrors.cancellationBankDocument = 'Bank document is required when status is Cancelled.';
+        valid = false;
+      }
+    }
+    
+    // Conditionally require completion bank document if status is COMPLETED
+    if (data.status === 'COMPLETED') {
+      const completionDoc = attachments.completionBankDocument;
+      if (!completionDoc.dataUrl) {
+        nextErrors.completionBankDocument = 'Bank letter of completion is required when status is Completed.';
+        valid = false;
+      }
+    }
+    
+    // All other attachments are always required
     ATTACHMENT_FIELDS.forEach(({ key }) => {
       const item = attachments[key];
       if (!item.dataUrl) {
-        nextErrors[key] = 'Please upload a PDF file.';
-        valid = false;
+        // Only set error if not already set
+        if (!nextErrors[key]) {
+          nextErrors[key] = 'Please upload a PDF file.';
+          valid = false;
+        }
       }
     });
     setAttachmentErrors(nextErrors);
@@ -311,9 +354,31 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
   };
 
   const validate = () => {
-    const result = EntrySchema.safeParse(data);
+    const payload = { ...data, attachments };
+    const result = EntrySchema.safeParse(payload);
     if (!result.success) {
       setErrors(result.error.flatten());
+      
+      // Extract attachment-specific errors from the validation result
+      const flatErrors = result.error.flatten();
+      const nextAttachmentErrors = createEmptyAttachmentErrors();
+      
+      // Check if there are nested attachment errors
+      if (flatErrors.fieldErrors && 'attachments.cancellationBankDocument' in flatErrors.fieldErrors) {
+        const cancellationErrors = (flatErrors.fieldErrors as any)['attachments.cancellationBankDocument'];
+        if (Array.isArray(cancellationErrors) && cancellationErrors.length > 0) {
+          nextAttachmentErrors.cancellationBankDocument = cancellationErrors[0];
+        }
+      }
+      
+      if (flatErrors.fieldErrors && 'attachments.completionBankDocument' in flatErrors.fieldErrors) {
+        const completionErrors = (flatErrors.fieldErrors as any)['attachments.completionBankDocument'];
+        if (Array.isArray(completionErrors) && completionErrors.length > 0) {
+          nextAttachmentErrors.completionBankDocument = completionErrors[0];
+        }
+      }
+      
+      setAttachmentErrors(nextAttachmentErrors);
       return false;
     }
     setErrors(null);
@@ -471,6 +536,7 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
                     ...data,
                     status: value as FormData['status'],
                     dateOfCancelled: value === 'CANCELLED' ? data.dateOfCancelled ?? '' : null,
+                    dateOfCompleted: value === 'COMPLETED' ? data.dateOfCompleted ?? '' : null,
                   })
                 }
               >
@@ -498,15 +564,144 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
               />
             </div>
             {data.status === 'CANCELLED' ? (
-              <div className="space-y-2">
-                <Label htmlFor="dateOfCancelled">Date Cancelled</Label>
-                <Input
-                  id="dateOfCancelled"
-                  type="date"
-                  value={data.dateOfCancelled ?? ''}
-                  onChange={(e) => setData({ ...data, dateOfCancelled: e.target.value })}
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="dateOfCancelled">Date Cancelled</Label>
+                  <Input
+                    id="dateOfCancelled"
+                    type="date"
+                    value={data.dateOfCancelled ?? ''}
+                    onChange={(e) => setData({ ...data, dateOfCancelled: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cancellationBankDocumentInline" className="text-sm font-medium text-foreground">
+                    Bank Document (Cancellation)<span className="ml-1 text-destructive">*</span>
+                  </Label>
+                  <div className="flex flex-col gap-2 rounded-lg border border-border/60 bg-muted/30 p-4">
+                    <div className="space-y-1 text-xs text-muted-foreground">
+                      {attachments.cancellationBankDocument?.name ? (
+                        <div className="truncate font-medium text-foreground">{attachments.cancellationBankDocument.name}</div>
+                      ) : (
+                        <div>No file selected</div>
+                      )}
+                      {attachments.cancellationBankDocument?.size ? <div>{formatFileSize(attachments.cancellationBankDocument.size)}</div> : null}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => openFilePicker('cancellationBankDocument')}
+                      >
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        {attachments.cancellationBankDocument?.dataUrl ? 'Change File' : 'Upload PDF'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => downloadAttachment(attachments.cancellationBankDocument)}
+                        disabled={!attachments.cancellationBankDocument?.dataUrl}
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => removeAttachment('cancellationBankDocument')}
+                        disabled={!attachments.cancellationBankDocument?.dataUrl}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                    <input
+                      ref={(element) => {
+                        fileInputRefs.current.cancellationBankDocument = element;
+                      }}
+                      id="cancellationBankDocumentInline"
+                      type="file"
+                      accept="application/pdf"
+                      className="hidden"
+                      onChange={(event) => handleAttachmentChange('cancellationBankDocument', event)}
+                    />
+                  </div>
+                  {attachmentErrors.cancellationBankDocument ? (
+                    <p className="text-xs text-destructive">{attachmentErrors.cancellationBankDocument}</p>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
+            {data.status === 'COMPLETED' ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="dateOfCompleted">Date Completed</Label>
+                  <Input
+                    id="dateOfCompleted"
+                    type="date"
+                    value={data.dateOfCompleted ?? ''}
+                    onChange={(e) => setData({ ...data, dateOfCompleted: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="completionBankDocumentInline" className="text-sm font-medium text-foreground">
+                    Bank Letter (Completion)<span className="ml-1 text-destructive">*</span>
+                  </Label>
+                  <div className="flex flex-col gap-2 rounded-lg border border-border/60 bg-muted/30 p-4">
+                    <div className="space-y-1 text-xs text-muted-foreground">
+                      {attachments.completionBankDocument?.name ? (
+                        <div className="truncate font-medium text-foreground">{attachments.completionBankDocument.name}</div>
+                      ) : (
+                        <div>No file selected</div>
+                      )}
+                      {attachments.completionBankDocument?.size ? <div>{formatFileSize(attachments.completionBankDocument.size)}</div> : null}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => openFilePicker('completionBankDocument')}
+                      >
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        {attachments.completionBankDocument?.dataUrl ? 'Change File' : 'Upload PDF'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => downloadAttachment(attachments.completionBankDocument)}
+                        disabled={!attachments.completionBankDocument?.dataUrl}
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => removeAttachment('completionBankDocument')}
+                        disabled={!attachments.completionBankDocument?.dataUrl}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                    <input
+                      ref={(element) => {
+                        fileInputRefs.current.completionBankDocument = element;
+                      }}
+                      id="completionBankDocumentInline"
+                      type="file"
+                      accept="application/pdf"
+                      className="hidden"
+                      onChange={(event) => handleAttachmentChange('completionBankDocument', event)}
+                    />
+                  </div>
+                  {attachmentErrors.completionBankDocument ? (
+                    <p className="text-xs text-destructive">{attachmentErrors.completionBankDocument}</p>
+                  ) : null}
+                </div>
+              </>
             ) : null}
           </div>
 

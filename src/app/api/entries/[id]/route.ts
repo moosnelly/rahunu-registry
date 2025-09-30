@@ -54,6 +54,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       no: d.no, address: d.address, extra: d.extra, island: d.island, formNumber: d.formNumber,
       date: new Date(d.date), branch: d.branch, agreementNumber: d.agreementNumber, status: d.status as any,
       loanAmount: d.loanAmount, dateOfCancelled: d.dateOfCancelled ? new Date(d.dateOfCancelled) : null,
+      dateOfCompleted: d.dateOfCompleted ? new Date(d.dateOfCompleted) : null,
       attachments,
       updatedById: actorId, borrowers: { deleteMany: { registryEntryId: params.id }, create: d.borrowers.map(b => ({ fullName: b.fullName, nationalId: b.nationalId })) }
     }, include: { borrowers: true }

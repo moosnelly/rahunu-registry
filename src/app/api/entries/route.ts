@@ -163,6 +163,7 @@ export async function POST(req: NextRequest) {
       date: new Date(data.date), branch: data.branch, agreementNumber: data.agreementNumber, status: data.status as any,
       loanAmount: data.loanAmount,
       dateOfCancelled: data.dateOfCancelled ? new Date(data.dateOfCancelled) : null,
+      dateOfCompleted: data.dateOfCompleted ? new Date(data.dateOfCompleted) : null,
       attachments,
       createdById: actorId, borrowers: { create: data.borrowers.map(b => ({ fullName: b.fullName, nationalId: b.nationalId })) }
     }, include: { borrowers: true }

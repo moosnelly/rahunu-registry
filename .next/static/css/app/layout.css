@@ -626,6 +626,9 @@
   .min-w-\[180px\] {
     min-width: 180px;
   }
+  .min-w-\[960px\] {
+    min-width: 960px;
+  }
   .flex-1 {
     flex: 1;
   }
@@ -691,9 +694,6 @@
   }
   .grid-rows-\[auto\,1fr\] {
     grid-template-rows: auto,1fr;
-  }
-  .grid-rows-\[auto\,minmax\(0\,1fr\)\,auto\] {
-    grid-template-rows: auto,minmax(0,1fr),auto;
   }
   .flex-col {
     flex-direction: column;
@@ -1024,6 +1024,12 @@
       background-color: color-mix(in oklab, var(--muted) 50%, transparent);
     }
   }
+  .bg-muted\/80 {
+    background-color: var(--muted);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--muted) 80%, transparent);
+    }
+  }
   .bg-popover {
     background-color: var(--popover);
   }
@@ -1216,6 +1222,9 @@
   .align-middle {
     vertical-align: middle;
   }
+  .align-top {
+    vertical-align: top;
+  }
   .text-2xl {
     font-size: var(--text-2xl);
     line-height: var(--tw-leading, var(--text-2xl--line-height));
@@ -1291,6 +1300,9 @@
   }
   .break-words {
     overflow-wrap: break-word;
+  }
+  .break-all {
+    word-break: break-all;
   }
   .whitespace-nowrap {
     white-space: nowrap;
@@ -2569,11 +2581,6 @@
       display: flex;
     }
   }
-  .md\:max-h-72 {
-    @media (width >= 48rem) {
-      max-height: calc(var(--spacing) * 72);
-    }
-  }
   .md\:grid-cols-2 {
     @media (width >= 48rem) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2671,6 +2678,11 @@
       display: block;
     }
   }
+  .lg\:grid {
+    @media (width >= 64rem) {
+      display: grid;
+    }
+  }
   .lg\:hidden {
     @media (width >= 64rem) {
       display: none;
@@ -2684,6 +2696,11 @@
   .lg\:grid-cols-\[2fr\,1fr\] {
     @media (width >= 64rem) {
       grid-template-columns: 2fr,1fr;
+    }
+  }
+  .lg\:grid-cols-\[minmax\(0\,1fr\)_auto\] {
+    @media (width >= 64rem) {
+      grid-template-columns: minmax(0,1fr) auto;
     }
   }
   .lg\:flex-row {
@@ -2706,9 +2723,14 @@
       justify-content: space-between;
     }
   }
-  .lg\:self-auto {
+  .lg\:justify-end {
     @media (width >= 64rem) {
-      align-self: auto;
+      justify-content: flex-end;
+    }
+  }
+  .lg\:gap-6 {
+    @media (width >= 64rem) {
+      gap: calc(var(--spacing) * 6);
     }
   }
   .lg\:px-10 {
