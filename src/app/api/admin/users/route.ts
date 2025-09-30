@@ -38,6 +38,16 @@ export async function POST(req: NextRequest) {
 
   const roleToAssign = newRole ?? Role.VIEWER;
 
+  // Validate that the actor user exists in the database
+  let validActorId: string | undefined = undefined;
+  if (actorId) {
+    const actorExists = await prisma.user.findUnique({ 
+      where: { id: actorId },
+      select: { id: true }
+    });
+    validActorId = actorExists?.id;
+  }
+
   const user = await prisma.user.create({
     data: {
       email,
@@ -52,7 +62,7 @@ export async function POST(req: NextRequest) {
   await prisma.auditLog.create({
     data: {
       action: AuditAction.USER_CREATED,
-      ...(actorId && { actorId }),
+      ...(validActorId && { actorId: validActorId }),
       targetUserId: user.id,
       details: JSON.stringify({ email: user.email, role: user.role }),
     },

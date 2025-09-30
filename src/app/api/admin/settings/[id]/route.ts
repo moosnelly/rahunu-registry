@@ -37,6 +37,16 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: "No changes provided" }, { status: 400 });
   }
 
+  // Validate that the actor user exists in the database
+  let validActorId: string | undefined = undefined;
+  if (actorId) {
+    const actorExists = await prisma.user.findUnique({ 
+      where: { id: actorId },
+      select: { id: true }
+    });
+    validActorId = actorExists?.id;
+  }
+
   const setting = await prisma.systemSetting.update({
     where: { id },
     data: updateData,
@@ -46,7 +56,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   await prisma.auditLog.create({
     data: {
       action: AuditAction.SETTINGS_UPDATED,
-      ...(actorId && { actorId }),
+      ...(validActorId && { actorId: validActorId }),
       details: JSON.stringify({
         action: "update",
         settingId: id,
@@ -77,6 +87,16 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: "Setting not found" }, { status: 404 });
   }
 
+  // Validate that the actor user exists in the database
+  let validActorId: string | undefined = undefined;
+  if (actorId) {
+    const actorExists = await prisma.user.findUnique({ 
+      where: { id: actorId },
+      select: { id: true }
+    });
+    validActorId = actorExists?.id;
+  }
+
   await prisma.systemSetting.delete({
     where: { id },
   });
@@ -85,7 +105,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
   await prisma.auditLog.create({
     data: {
       action: AuditAction.SETTINGS_UPDATED,
-      ...(actorId && { actorId }),
+      ...(validActorId && { actorId: validActorId }),
       details: JSON.stringify({
         action: "delete",
         category: setting.category,

@@ -35,6 +35,16 @@ export async function PATCH(_: NextRequest, context: RouteContext) {
     );
   }
 
+  // Validate that the actor user exists in the database
+  let validActorId: string | undefined = undefined;
+  if (actorId) {
+    const actorExists = await prisma.user.findUnique({ 
+      where: { id: actorId },
+      select: { id: true }
+    });
+    validActorId = actorExists?.id;
+  }
+
   const restored = await prisma.registryEntry.update({
     where: { id: params.id },
     data: { isDeleted: false, deletedAt: null },
@@ -43,7 +53,7 @@ export async function PATCH(_: NextRequest, context: RouteContext) {
   await prisma.auditLog.create({
     data: {
       action: AuditAction.ENTRY_RESTORED,
-      ...(actorId && { actorId }),
+      ...(validActorId && { actorId: validActorId }),
       targetEntryId: params.id,
       details: JSON.stringify({
         no: restored.no,
@@ -93,11 +103,21 @@ export async function DELETE(_: NextRequest, context: RouteContext) {
     data: { targetEntryId: null },
   });
 
+  // Validate that the actor user exists in the database
+  let validActorId: string | undefined = undefined;
+  if (actorId) {
+    const actorExists = await prisma.user.findUnique({ 
+      where: { id: actorId },
+      select: { id: true }
+    });
+    validActorId = actorExists?.id;
+  }
+
   // Create a final audit log before deletion
   await prisma.auditLog.create({
     data: {
       action: AuditAction.ENTRY_DELETED,
-      ...(actorId && { actorId }),
+      ...(validActorId && { actorId: validActorId }),
       targetEntryId: null,
       details: JSON.stringify({
         permanentlyDeleted: true,

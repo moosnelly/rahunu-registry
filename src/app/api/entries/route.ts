@@ -157,6 +157,17 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ errors: parsed.error.flatten() }, { status: 400 });
   const data = parsed.data;
   const attachments = sanitizeAttachmentRecord(data.attachments);
+  
+  // Validate that the actor user exists in the database
+  let validActorId: string | undefined = undefined;
+  if (actorId) {
+    const actorExists = await prisma.user.findUnique({ 
+      where: { id: actorId },
+      select: { id: true }
+    });
+    validActorId = actorExists?.id;
+  }
+  
   const created = await prisma.registryEntry.create({
     data: {
       no: data.no, address: data.address, island: data.island, formNumber: data.formNumber,
@@ -165,9 +176,9 @@ export async function POST(req: NextRequest) {
       dateOfCancelled: data.dateOfCancelled ? new Date(data.dateOfCancelled) : null,
       dateOfCompleted: data.dateOfCompleted ? new Date(data.dateOfCompleted) : null,
       attachments,
-      createdById: actorId, borrowers: { create: data.borrowers.map(b => ({ fullName: b.fullName, nationalId: b.nationalId })) }
+      createdById: validActorId, borrowers: { create: data.borrowers.map(b => ({ fullName: b.fullName, nationalId: b.nationalId })) }
     }, include: { borrowers: true }
   });
-  await prisma.auditLog.create({ data: { action: AuditAction.ENTRY_CREATED, ...(actorId && { actorId }), targetEntryId: created.id, details: JSON.stringify({ agreementNumber: created.agreementNumber, loanAmount: created.loanAmount.toString(), borrowersCount: created.borrowers.length }) } });
+  await prisma.auditLog.create({ data: { action: AuditAction.ENTRY_CREATED, ...(validActorId && { actorId: validActorId }), targetEntryId: created.id, details: JSON.stringify({ agreementNumber: created.agreementNumber, loanAmount: created.loanAmount.toString(), borrowersCount: created.borrowers.length }) } });
   return NextResponse.json({ ...created, attachments }, { status: 201 });
 }

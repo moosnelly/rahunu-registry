@@ -29,7 +29,17 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   if (typeof isActive === "boolean") { updates.isActive = isActive; logs.push({ action: AuditAction.USER_STATUS_CHANGED, details: { isActive } }); }
   if (resetPassword) { updates.passwordHash = await bcrypt.hash(resetPassword, 10); logs.push({ action: AuditAction.USER_PASSWORD_RESET }); }
 
+  // Validate that the actor user exists in the database
+  let validActorId: string | undefined = undefined;
+  if (actorId) {
+    const actorExists = await prisma.user.findUnique({ 
+      where: { id: actorId },
+      select: { id: true }
+    });
+    validActorId = actorExists?.id;
+  }
+
   const updated = await prisma.user.update({ where: { id: params.id }, data: updates, select: { id:true, email:true, role:true, isActive:true } });
-  for (const l of logs) { await prisma.auditLog.create({ data: { action: l.action, ...(actorId && { actorId }), targetUserId: updated.id, details: l.details ? JSON.stringify(l.details) : undefined } }); }
+  for (const l of logs) { await prisma.auditLog.create({ data: { action: l.action, ...(validActorId && { actorId: validActorId }), targetUserId: updated.id, details: l.details ? JSON.stringify(l.details) : undefined } }); }
   return NextResponse.json(updated);
 }
