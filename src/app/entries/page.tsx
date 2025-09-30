@@ -1168,34 +1168,32 @@ function EntryAuditDialog({ entryId, open, onClose }: { entryId: string | null; 
 
   return (
     <Dialog open={open} onOpenChange={(next) => (!next ? onClose() : null)}>
-      <DialogContent className="max-w-2xl gap-0 p-0">
-        <DialogHeader className="space-y-2 border-b border-border/60 bg-muted/40 px-6 py-5 text-left">
+      <DialogContent className="max-w-2xl max-h-[90vh] gap-0 p-0 flex flex-col">
+        <DialogHeader className="space-y-2 border-b border-border/60 bg-muted/40 px-6 py-5 text-left flex-shrink-0">
           <DialogTitle className="text-lg font-semibold">Entry Audit Trail</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
             A chronological log of updates, deletions, and other activity related to this registry entry.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid max-h-[calc(100vh-200px)] grid-rows-[auto,1fr] gap-0 overflow-hidden">
-          <div className="flex items-center justify-between gap-2 border-b border-border/60 px-6 py-4 text-xs text-muted-foreground">
-            {entryId ? (
-              <span>
-                Entry ID: <span className="font-medium text-foreground">{entryId}</span>
-              </span>
-            ) : (
-              <span>No entry selected</span>
-            )}
-            <button
-              type="button"
-              onClick={handleRefresh}
-              disabled={isLoading || !entryId}
-              className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-background px-3 py-1 text-xs font-semibold text-foreground shadow-sm transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Refresh
-            </button>
-          </div>
-          <div className="overflow-y-auto px-6 py-6 scroll-smooth">
-            {isLoading ? renderSkeleton() : error ? renderError() : logs.length === 0 ? renderEmpty() : renderTimeline()}
-          </div>
+        <div className="flex items-center justify-between gap-2 border-b border-border/60 px-6 py-4 text-xs text-muted-foreground flex-shrink-0">
+          {entryId ? (
+            <span>
+              Entry ID: <span className="font-medium text-foreground">{entryId}</span>
+            </span>
+          ) : (
+            <span>No entry selected</span>
+          )}
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={isLoading || !entryId}
+            className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-background px-3 py-1 text-xs font-semibold text-foreground shadow-sm transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Refresh
+          </button>
+        </div>
+        <div className="overflow-y-auto px-6 py-6 scroll-smooth flex-1 min-h-0">
+          {isLoading ? renderSkeleton() : error ? renderError() : logs.length === 0 ? renderEmpty() : renderTimeline()}
         </div>
       </DialogContent>
     </Dialog>
