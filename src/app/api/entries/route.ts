@@ -168,9 +168,16 @@ export async function POST(req: NextRequest) {
     validActorId = actorExists?.id;
   }
   
+  // Auto-generate the next registry number
+  const maxEntry = await prisma.registryEntry.findFirst({
+    orderBy: { no: 'desc' },
+    select: { no: true }
+  });
+  const nextNo = (maxEntry?.no ?? 0) + 1;
+  
   const created = await prisma.registryEntry.create({
     data: {
-      no: data.no, address: data.address, island: data.island, formNumber: data.formNumber,
+      no: nextNo, address: data.address, island: data.island, formNumber: data.formNumber,
       date: new Date(data.date), branch: data.branch, agreementNumber: data.agreementNumber, status: data.status as any,
       loanAmount: data.loanAmount,
       dateOfCancelled: data.dateOfCancelled ? new Date(data.dateOfCancelled) : null,

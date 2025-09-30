@@ -148,6 +148,12 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
   const { data: islandData } = useSWR('/api/admin/settings?category=ISLAND', fetcher);
   const { data: branchData } = useSWR('/api/admin/settings?category=BANK_BRANCH', fetcher);
   
+  // Fetch next registry number for new entries
+  const { data: nextRegistryData } = useSWR(
+    mode === 'create' ? '/api/entries/next-number' : null,
+    fetcher
+  );
+  
   // Filter and sort active settings
   const islands = useMemo(() => {
     const settings = (islandData?.settings || []) as SystemSetting[];
@@ -177,6 +183,13 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
     dateOfCompleted: null,
     borrowers: [emptyBorrower],
   });
+  
+  // Update registry number when next number is fetched (create mode only)
+  useEffect(() => {
+    if (mode === 'create' && nextRegistryData?.nextNumber) {
+      setData((prev) => ({ ...prev, no: nextRegistryData.nextNumber }));
+    }
+  }, [mode, nextRegistryData]);
   const [errors, setErrors] = useState<z.typeToFlattenedError<FormData> | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingEntry, setLoadingEntry] = useState(mode === 'edit');
@@ -559,10 +572,17 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
               <Input
                 id="no"
                 type="number"
-                value={data.no}
+                value={data.no || ''}
                 onChange={(e) => setData({ ...data, no: Number(e.target.value) })}
-                placeholder="1"
+                placeholder={mode === 'create' ? 'Auto-generated' : '1'}
+                disabled={mode === 'create'}
+                className={mode === 'create' ? 'bg-muted cursor-not-allowed' : ''}
               />
+              {mode === 'create' && (
+                <p className="text-xs text-muted-foreground">
+                  This number will be automatically assigned when you create the entry.
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="formNumber">Form Number</Label>
