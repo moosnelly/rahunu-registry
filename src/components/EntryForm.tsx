@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
+import useSWR from 'swr';
 import { EntrySchema } from '@/lib/validation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,17 @@ type FormData = {
   dateOfCompleted?: string | null;
   borrowers: Borrower[];
 };
+
+type SystemSetting = {
+  id: string;
+  category: string;
+  value: string;
+  displayName: string | null;
+  isActive: boolean;
+  sortOrder: number;
+};
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const emptyBorrower: Borrower = { fullName: '', nationalId: '' };
 
@@ -131,6 +143,26 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
   const { data: session, status } = useSession();
   const role = (session?.user as any)?.role;
   const canWrite = role === 'ADMIN' || role === 'DATA_ENTRY';
+  
+  // Fetch system settings for islands and branches
+  const { data: islandData } = useSWR('/api/admin/settings?category=ISLAND', fetcher);
+  const { data: branchData } = useSWR('/api/admin/settings?category=BANK_BRANCH', fetcher);
+  
+  // Filter and sort active settings
+  const islands = useMemo(() => {
+    const settings = (islandData?.settings || []) as SystemSetting[];
+    return settings
+      .filter((s) => s.isActive)
+      .sort((a, b) => a.sortOrder - b.sortOrder || a.value.localeCompare(b.value));
+  }, [islandData]);
+  
+  const branches = useMemo(() => {
+    const settings = (branchData?.settings || []) as SystemSetting[];
+    return settings
+      .filter((s) => s.isActive)
+      .sort((a, b) => a.sortOrder - b.sortOrder || a.value.localeCompare(b.value));
+  }, [branchData]);
+  
   const [data, setData] = useState<FormData>({
     no: 0,
     address: '',
@@ -552,12 +584,21 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
             </div>
             <div className="space-y-2">
               <Label htmlFor="branch">Branch</Label>
-              <Input
-                id="branch"
+              <Select
                 value={data.branch}
-                onChange={(e) => setData({ ...data, branch: e.target.value })}
-                placeholder="Select branch"
-              />
+                onValueChange={(value) => setData({ ...data, branch: value })}
+              >
+                <SelectTrigger id="branch">
+                  <SelectValue placeholder="Select branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  {branches.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.value}>
+                      {branch.displayName || branch.value}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="agreementNumber">Agreement Number</Label>
@@ -570,12 +611,21 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
             </div>
             <div className="space-y-2">
               <Label htmlFor="island">Island</Label>
-              <Input
-                id="island"
+              <Select
                 value={data.island}
-                onChange={(e) => setData({ ...data, island: e.target.value })}
-                placeholder="Malé"
-              />
+                onValueChange={(value) => setData({ ...data, island: value })}
+              >
+                <SelectTrigger id="island">
+                  <SelectValue placeholder="Select island" />
+                </SelectTrigger>
+                <SelectContent>
+                  {islands.map((island) => (
+                    <SelectItem key={island.id} value={island.value}>
+                      {island.displayName || island.value}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="address">Address</Label>

@@ -7,10 +7,10 @@ import { AuditAction } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  const role = (session?.user as any)?.role;
   
-  if (role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  // Allow all authenticated users to read settings (needed for entry form dropdowns)
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { searchParams } = new URL(req.url);
