@@ -25,7 +25,15 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trash2 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Trash2, Pencil } from 'lucide-react';
 
 type SettingCategory = 'ISLAND' | 'BANK_BRANCH' | 'REGION' | 'DOCUMENT_TYPE';
 
@@ -43,6 +51,11 @@ type SystemSetting = {
 type CreateSettingState = {
   category: SettingCategory;
   value: string;
+  displayName: string;
+  sortOrder: number;
+};
+
+type EditSettingState = {
   displayName: string;
   sortOrder: number;
 };
@@ -86,6 +99,15 @@ export default function SettingsClient() {
     displayName: '',
     sortOrder: 0,
   });
+  
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingSetting, setEditingSetting] = useState<SystemSetting | null>(null);
+  const [editState, setEditState] = useState<EditSettingState>({
+    displayName: '',
+    sortOrder: 0,
+  });
+  const [editError, setEditError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   // Filter settings by active tab
   const filteredSettings = useMemo(
@@ -171,6 +193,54 @@ export default function SettingsClient() {
       mutate();
     } finally {
       setCreating(false);
+    }
+  };
+
+  const openEditDialog = (setting: SystemSetting) => {
+    setEditingSetting(setting);
+    setEditState({
+      displayName: setting.displayName || setting.value,
+      sortOrder: setting.sortOrder,
+    });
+    setEditError(null);
+    setEditDialogOpen(true);
+  };
+
+  const closeEditDialog = () => {
+    setEditDialogOpen(false);
+    setEditingSetting(null);
+    setEditError(null);
+  };
+
+  const handleEdit = async () => {
+    if (!editingSetting) return;
+
+    setEditError(null);
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/settings/${editingSetting.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editState),
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        if (payload?.errors?.fieldErrors) {
+          const firstError = Object.values(payload.errors.fieldErrors)[0] as string[] | undefined;
+          setEditError(firstError?.[0] ?? 'Unable to update setting');
+        } else if (payload?.error) {
+          setEditError(payload.error);
+        } else {
+          setEditError('Unable to update setting');
+        }
+        return;
+      }
+
+      closeEditDialog();
+      mutate();
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -339,14 +409,24 @@ export default function SettingsClient() {
                               </button>
                             </TableCell>
                             <TableCell className="text-right">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                disabled={busy === setting.id}
-                                onClick={() => deleteSetting(setting.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
+                              <div className="flex justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={busy === setting.id}
+                                  onClick={() => openEditDialog(setting)}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={busy === setting.id}
+                                  onClick={() => deleteSetting(setting.id)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))
@@ -359,6 +439,83 @@ export default function SettingsClient() {
           </TabsContent>
         ))}
       </Tabs>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Setting</DialogTitle>
+            <DialogDescription>
+              Update the display name and sort order for this setting.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {editError ? (
+              <Alert variant="destructive">
+                <AlertTitle>Unable to update setting</AlertTitle>
+                <AlertDescription>{editError}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            {editingSetting && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-value">Value (Read-only)</Label>
+                  <Input
+                    id="edit-value"
+                    value={editingSetting.value}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-displayName">Display Name</Label>
+                  <Input
+                    id="edit-displayName"
+                    value={editState.displayName}
+                    onChange={(e) =>
+                      setEditState((prev) => ({ ...prev, displayName: e.target.value }))
+                    }
+                    placeholder="Display name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-sortOrder">Sort Order</Label>
+                  <Input
+                    id="edit-sortOrder"
+                    type="number"
+                    value={editState.sortOrder}
+                    onChange={(e) =>
+                      setEditState((prev) => ({
+                        ...prev,
+                        sortOrder: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    placeholder="0"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeEditDialog}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleEdit} disabled={saving}>
+              {saving ? 'Saving…' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
