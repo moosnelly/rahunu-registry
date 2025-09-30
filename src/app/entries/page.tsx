@@ -7,7 +7,7 @@ import useSWR from 'swr';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { endOfDay, startOfDay, startOfYear, subDays, format } from 'date-fns';
-import { CalendarIcon, Download, Edit, ExternalLink, FileText, History, MoreHorizontal, SearchIcon, Trash2, XIcon } from 'lucide-react';
+import { CalendarIcon, Download, Edit, Eye, ExternalLink, FileText, History, MoreHorizontal, SearchIcon, Trash2, XIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
