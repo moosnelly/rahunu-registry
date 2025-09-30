@@ -61,7 +61,6 @@ export async function GET(req: NextRequest) {
   if (query) {
     const trimmedQuery = query.trim();
     const tokens = trimmedQuery.split(/\s+/).filter(Boolean);
-    const numericValue = Number(trimmedQuery);
     const normalizedId = trimmedQuery.replace(/\s+/g, "");
 
     const borrowerNameCondition = tokens.length > 1
@@ -88,6 +87,11 @@ export async function GET(req: NextRequest) {
 
     const orConditions: any[] = [
       {
+        no: {
+          contains: trimmedQuery,
+        },
+      },
+      {
         agreementNumber: {
           contains: trimmedQuery,
         },
@@ -108,10 +112,6 @@ export async function GET(req: NextRequest) {
         },
       },
     ];
-
-    if (!Number.isNaN(numericValue)) {
-      orConditions.push({ no: numericValue });
-    }
 
     where.OR = orConditions;
   }
@@ -168,12 +168,34 @@ export async function POST(req: NextRequest) {
     validActorId = actorExists?.id;
   }
   
-  // Auto-generate the next registry number
-  const maxEntry = await prisma.registryEntry.findFirst({
-    orderBy: { no: 'desc' },
-    select: { no: true }
+  // Auto-generate the next registry number in format RGSTXXX/YYYY
+  const currentYear = new Date().getFullYear();
+  const yearSuffix = currentYear.toString();
+  
+  // Find all entries for the current year
+  const yearPattern = `%/${yearSuffix}`;
+  const entriesThisYear = await prisma.registryEntry.findMany({
+    where: {
+      no: {
+        endsWith: `/${yearSuffix}`
+      }
+    },
+    select: { no: true },
+    orderBy: { no: 'desc' }
   });
-  const nextNo = (maxEntry?.no ?? 0) + 1;
+  
+  // Extract the sequence number from the last entry
+  let nextSequence = 1;
+  if (entriesThisYear.length > 0) {
+    const lastNo = entriesThisYear[0].no;
+    const match = lastNo.match(/^RGST(\d{3})\//);
+    if (match) {
+      nextSequence = parseInt(match[1], 10) + 1;
+    }
+  }
+  
+  // Format: RGST001/2025
+  const nextNo = `RGST${nextSequence.toString().padStart(3, '0')}/${yearSuffix}`;
   
   const created = await prisma.registryEntry.create({
     data: {

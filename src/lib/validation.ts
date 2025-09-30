@@ -7,7 +7,7 @@ const AttachmentValueSchema = z.object({
 });
 
 export const EntrySchema = z.object({
-  no: z.number().int().positive(),
+  no: z.string().regex(/^RGST\d{3}\/\d{4}$/, "Registry number must be in format RGSTXXX/YYYY"),
   address: z.string().min(1),
   island: z.string().min(1),
   formNumber: z.string().min(1).regex(/^\d{1,5}\/\d{4}$/),

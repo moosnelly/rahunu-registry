@@ -60,7 +60,7 @@ model User {
 
 model RegistryEntry {
   id               String       @id @default(cuid())
-  no               Int          @unique
+  no               String       @unique
   address          String
   island           String
   formNumber       String

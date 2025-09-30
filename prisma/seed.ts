@@ -43,11 +43,12 @@ async function main() {
 
   const borrowerData = [{ fullName: "Mariyam Mahaa Abdul Samad", nationalId: "A354960" }];
 
-  const existingEntry = await prisma.registryEntry.findUnique({ where: { no: 1 } });
+  const registryNumber = "RGST001/2025";
+  const existingEntry = await prisma.registryEntry.findUnique({ where: { no: registryNumber } });
   let entry;
   if (existingEntry) {
     entry = await prisma.registryEntry.update({
-      where: { no: 1 },
+      where: { no: registryNumber },
       data: {
         ...entryCoreData,
         updatedById: admin.id,
@@ -60,7 +61,7 @@ async function main() {
   } else {
     entry = await prisma.registryEntry.create({
       data: {
-        no: 1,
+        no: registryNumber,
         ...entryCoreData,
         createdById: admin.id,
         borrowers: { create: borrowerData }

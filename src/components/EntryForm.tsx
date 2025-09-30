@@ -20,7 +20,7 @@ import { sanitizeAttachmentRecord, sanitizeAttachmentValue } from '@/lib/attachm
 
 type Borrower = { fullName: string; nationalId: string };
 type FormData = {
-  no: number;
+  no: string;
   address: string;
   island: string;
   formNumber: string;
@@ -170,7 +170,7 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
   }, [branchData]);
   
   const [data, setData] = useState<FormData>({
-    no: 0,
+    no: '',
     address: '',
     island: '',
     formNumber: '',
@@ -571,10 +571,10 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
               <Label htmlFor="no">Registry Number</Label>
               <Input
                 id="no"
-                type="number"
+                type="text"
                 value={data.no || ''}
-                onChange={(e) => setData({ ...data, no: Number(e.target.value) })}
-                placeholder={mode === 'create' ? 'Auto-generated' : '1'}
+                onChange={(e) => setData({ ...data, no: e.target.value })}
+                placeholder={mode === 'create' ? 'Auto-generated (e.g., RGST001/2025)' : 'RGST001/2025'}
                 disabled={mode === 'create'}
                 className={mode === 'create' ? 'bg-muted cursor-not-allowed' : ''}
               />
