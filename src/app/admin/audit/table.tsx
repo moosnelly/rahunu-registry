@@ -89,13 +89,28 @@ export default function AuditClient() {
     return search.toString();
   }, [action, entity, limit]);
 
-  const endpoint = queryString ? `/api/admin/audit?${queryString}` : '/api/admin/audit';
+  const [page, setPage] = useState<number>(1);
 
-  const { data, error, isLoading, mutate } = useSWR(endpoint, fetcher, {
+  const baseEndpoint = useMemo(() => {
+    const url = queryString ? `/api/admin/audit?${queryString}` : '/api/admin/audit';
+    return url;
+  }, [queryString]);
+
+  const endpoint = useMemo(() => {
+    const url = new URL(baseEndpoint, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+    const pageSize = Number(limit || '100') || 100;
+    url.searchParams.set('page', String(page));
+    url.searchParams.set('pageSize', String(pageSize));
+    return url.pathname + url.search;
+  }, [baseEndpoint, page, limit]);
+
+  const { data, error, isLoading, mutate, isValidating } = useSWR(endpoint, fetcher, {
     refreshInterval: 60_000,
   });
 
   const logs = data?.logs ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const total = data?.total ?? 0;
   const isEmpty = !isLoading && logs.length === 0;
 
   const normalizeLog = (log: any) => {
@@ -191,12 +206,13 @@ export default function AuditClient() {
                     setEntity(DEFAULT_FILTER_VALUE);
                     setAction(DEFAULT_FILTER_VALUE);
                     setLimit("100");
+                    setPage(1);
                     mutate();
                   }}
                 >
                   Reset
                 </Button>
-                <Button onClick={() => mutate()}>Refresh</Button>
+                <Button onClick={() => { setPage(1); mutate(); }}>Refresh</Button>
               </div>
             </div>
           </div>
@@ -280,6 +296,35 @@ export default function AuditClient() {
                       );
                     })
                   )}
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                  <Button variant="outline" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || isValidating}>
+                    Prev
+                  </Button>
+                  {Array.from({ length: Math.min(7, totalPages) }).map((_, idx) => {
+                    // Simple window: center current when possible
+                    const windowSize = 7;
+                    const half = Math.floor(windowSize / 2);
+                    let start = Math.max(1, page - half);
+                    let end = Math.min(totalPages, start + windowSize - 1);
+                    start = Math.max(1, end - windowSize + 1);
+                    const pageNum = start + idx;
+                    if (pageNum > end) return null;
+                    const isActive = pageNum === page;
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={isActive ? 'default' : 'outline'}
+                        onClick={() => setPage(pageNum)}
+                        disabled={isValidating}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                  <Button variant="outline" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages || isValidating}>
+                    Next
+                  </Button>
+                </div>
                 </div>
                 <div className="hidden lg:block">
                   <div className="w-full overflow-x-auto">
@@ -345,6 +390,34 @@ export default function AuditClient() {
                       )}
                   </TableBody>
                     </Table>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                    <Button variant="outline" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || isValidating}>
+                      Prev
+                    </Button>
+                    {Array.from({ length: Math.min(9, totalPages) }).map((_, idx) => {
+                      const windowSize = 9;
+                      const half = Math.floor(windowSize / 2);
+                      let start = Math.max(1, page - half);
+                      let end = Math.min(totalPages, start + windowSize - 1);
+                      start = Math.max(1, end - windowSize + 1);
+                      const pageNum = start + idx;
+                      if (pageNum > end) return null;
+                      const isActive = pageNum === page;
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={isActive ? 'default' : 'outline'}
+                          onClick={() => setPage(pageNum)}
+                          disabled={isValidating}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                    <Button variant="outline" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages || isValidating}>
+                      Next
+                    </Button>
                   </div>
                 </div>
               </>

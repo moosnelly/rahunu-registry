@@ -138,7 +138,24 @@ const createFileFromDataUrl = (dataUrl: string, fileName: string): File => {
   return new File([array], fileName, { type: mimeType });
 };
 
-export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: string }) {
+type InitialData = {
+  id: string;
+  no: number;
+  address: string;
+  island: string;
+  formNumber: string;
+  date: string;
+  branch: string;
+  agreementNumber: string;
+  status: 'ONGOING' | 'CANCELLED' | 'COMPLETED';
+  loanAmount: number;
+  dateOfCancelled: string | null;
+  dateOfCompleted: string | null;
+  borrowers: Borrower[];
+  attachments: any;
+};
+
+export default function EntryForm({ mode, id, initialData }: { mode: 'create' | 'edit'; id?: string; initialData?: InitialData }) {
   const router = useRouter();
   const { data: session, status } = useSession();
   const role = (session?.user as any)?.role;
@@ -192,7 +209,7 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
   }, [mode, nextRegistryData]);
   const [errors, setErrors] = useState<z.typeToFlattenedError<FormData> | null>(null);
   const [loading, setLoading] = useState(false);
-  const [loadingEntry, setLoadingEntry] = useState(mode === 'edit');
+  const [loadingEntry, setLoadingEntry] = useState(mode === 'edit' && !initialData);
   const [serverError, setServerError] = useState<string | null>(null);
   const storageKey = useMemo(() => (mode === 'edit' && id ? `entry-attachments-${id}` : 'entry-attachments-new'), [mode, id]);
   const [attachments, setAttachments] = useState<AttachmentRecord>(createEmptyAttachmentRecord);
@@ -237,9 +254,37 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
     }
   }, [attachments, storageKey]);
 
+  // Load initial data from server-side props or fetch client-side
   useEffect(() => {
     if (mode !== 'edit' || !id) return;
 
+    // If we have initialData from server, use it immediately
+    if (initialData) {
+      setData({
+        no: initialData.no ?? 0,
+        address: initialData.address ?? '',
+        island: initialData.island ?? '',
+        formNumber: initialData.formNumber ?? '',
+        date: initialData.date ?? '',
+        branch: initialData.branch ?? '',
+        agreementNumber: initialData.agreementNumber ?? '',
+        status: initialData.status ?? 'ONGOING',
+        loanAmount: initialData.loanAmount ?? 0,
+        dateOfCancelled: initialData.dateOfCancelled ?? null,
+        dateOfCompleted: initialData.dateOfCompleted ?? null,
+        borrowers: initialData.borrowers && initialData.borrowers.length > 0
+          ? initialData.borrowers
+          : [emptyBorrower],
+      });
+
+      if (initialData.attachments) {
+        setAttachments(sanitizeAttachmentRecordWithKeys(initialData.attachments));
+      }
+      setLoadingEntry(false);
+      return;
+    }
+
+    // Fallback to client-side fetch if no initialData
     const controller = new AbortController();
 
     const loadEntry = async () => {
@@ -289,7 +334,7 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
     return () => {
       controller.abort();
     };
-  }, [id, mode]);
+  }, [id, mode, initialData]);
   const handleAttachmentChange = async (key: AllAttachmentKeys, event: ChangeEvent<HTMLInputElement>) => {
     const input = event.target;
     const file = input.files?.[0];

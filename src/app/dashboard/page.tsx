@@ -292,7 +292,7 @@ export default async function Page() {
                       <TableRow key={entry.id}>
                         <TableCell className="text-muted-foreground">{entry.no}</TableCell>
                         <TableCell>
-                          <Link href={`/entries/${entry.id}/edit`} className="font-medium text-primary hover:underline">
+                          <Link href={`/entries/${entry.id}/edit`} className="font-medium text-primary hover:underline" prefetch={true}>
                             {entry.agreementNumber}
                           </Link>
                         </TableCell>

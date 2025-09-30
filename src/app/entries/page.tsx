@@ -557,7 +557,7 @@ export default function EntriesPage() {
                       <TableRow key={entry.id}>
                         <TableCell className="text-muted-foreground">{entry.no}</TableCell>
                         <TableCell className="font-medium">
-                          <Link href={`/entries/${entry.id}/edit`} className="hover:underline">
+                          <Link href={`/entries/${entry.id}/edit`} className="hover:underline" prefetch={true}>
                             {entry.agreementNumber}
                           </Link>
                         </TableCell>
@@ -599,7 +599,7 @@ export default function EntriesPage() {
                               {canWrite ? <DropdownMenuSeparator /> : null}
                               {canWrite ? (
                                 <DropdownMenuItem asChild>
-                                  <Link href={`/entries/${entry.id}/edit`} className="gap-2 flex items-center">
+                                  <Link href={`/entries/${entry.id}/edit`} className="gap-2 flex items-center" prefetch={true}>
                                     <Edit className="h-4 w-4" />
                                     Edit entry
                                   </Link>
@@ -887,7 +887,7 @@ function EntryDetailsModal({ entry, open, onClose, canEdit }: EntryDetailsModalP
         <CardFooter className="flex items-center justify-between gap-2">
           {canEdit ? (
             <Button asChild variant="outline">
-              <Link href={`/entries/${entry.id}/edit`}>Edit Entry</Link>
+              <Link href={`/entries/${entry.id}/edit`} prefetch={true}>Edit Entry</Link>
             </Button>
           ) : (
             <div />
