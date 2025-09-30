@@ -995,7 +995,7 @@ function EntryAuditDialog({ entryId, open, onClose }: { entryId: string | null; 
             A chronological log of updates, deletions, and other activity related to this registry entry.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid max-h-[520px] grid-rows-[auto,1fr] gap-0 overflow-hidden">
+        <div className="grid max-h-[calc(100vh-200px)] grid-rows-[auto,1fr] gap-0 overflow-hidden">
           <div className="flex items-center justify-between gap-2 border-b border-border/60 px-6 py-4 text-xs text-muted-foreground">
             {entryId ? (
               <span>
@@ -1013,7 +1013,7 @@ function EntryAuditDialog({ entryId, open, onClose }: { entryId: string | null; 
               Refresh
             </button>
           </div>
-          <div className="overflow-y-auto px-6 py-6">
+          <div className="overflow-y-auto px-6 py-6 scroll-smooth">
             {isLoading ? renderSkeleton() : error ? renderError() : logs.length === 0 ? renderEmpty() : renderTimeline()}
           </div>
         </div>
