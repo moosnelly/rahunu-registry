@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import useSWR from 'swr';
 import { format } from 'date-fns';
-import { CalendarIcon, Check, DownloadCloud, Loader2 } from 'lucide-react';
+import { CalendarIcon, Check, DownloadCloud, Loader2, Eye } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +27,14 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
 type EntryFiltersResponse = {
@@ -107,6 +115,8 @@ export default function ReportsPage() {
   const [minAmount, setMinAmount] = useState<string>('');
   const [maxAmount, setMaxAmount] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isPreviewing, setIsPreviewing] = useState(false);
+  const [previewData, setPreviewData] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -182,6 +192,49 @@ export default function ReportsPage() {
       setErrorMessage(error instanceof Error ? error.message : 'Failed to generate report');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handlePreviewReport = async () => {
+    setIsPreviewing(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    try {
+      const payload = {
+        reportType,
+        format: formatValue,
+        filters: {
+          status: status !== 'ALL' ? status : undefined,
+          island: island !== 'ALL' ? island : undefined,
+          branch: branch !== 'ALL' ? branch : undefined,
+          startDate: dateRange?.from?.toISOString(),
+          endDate: dateRange?.to?.toISOString() ?? dateRange?.from?.toISOString(),
+          minAmount: parseNumberInput(minAmount),
+          maxAmount: parseNumberInput(maxAmount),
+        },
+      };
+
+      const response = await fetch('/api/reports/preview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.error ?? 'Failed to generate preview');
+      }
+
+      const data = await response.json();
+      setPreviewData(data);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to generate preview');
+      setPreviewData(null);
+    } finally {
+      setIsPreviewing(false);
     }
   };
 
@@ -388,21 +441,246 @@ export default function ReportsPage() {
           <p className="text-xs text-muted-foreground">
             Reports include data from the national Rahunu registry. Filters apply before export.
           </p>
-          <Button onClick={handleGenerateReport} disabled={isGenerating} className="min-w-[180px]">
-            {isGenerating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating…
-              </>
-            ) : (
-              <>
-                <DownloadCloud className="mr-2 h-4 w-4" />
-                Generate Report
-              </>
-            )}
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              onClick={handlePreviewReport}
+              disabled={isPreviewing || isGenerating}
+              variant="outline"
+              className="min-w-[160px]"
+            >
+              {isPreviewing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading…
+                </>
+              ) : (
+                <>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Preview
+                </>
+              )}
+            </Button>
+            <Button onClick={handleGenerateReport} disabled={isGenerating || isPreviewing} className="min-w-[180px]">
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating…
+                </>
+              ) : (
+                <>
+                  <DownloadCloud className="mr-2 h-4 w-4" />
+                  Generate Report
+                </>
+              )}
+            </Button>
+          </div>
         </CardFooter>
       </Card>
+
+      {previewData && (
+        <Card>
+          <CardHeader className="border-b border-border/60">
+            <CardTitle className="text-xl text-foreground">Report Preview</CardTitle>
+            <CardDescription>
+              Preview of {reportTypes.find((t) => t.value === reportType)?.label.toLowerCase()}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {previewData.reportType === 'SUMMARY' && (
+              <div className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardDescription>Total Entries</CardDescription>
+                      <CardTitle className="text-2xl">{previewData.data.totals.entries.toLocaleString()}</CardTitle>
+                    </CardHeader>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardDescription>Total Amount</CardDescription>
+                      <CardTitle className="text-2xl">
+                        {new Intl.NumberFormat('en-MV', {
+                          style: 'currency',
+                          currency: 'MVR',
+                        }).format(previewData.data.totals.amount)}
+                      </CardTitle>
+                    </CardHeader>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardDescription>Average Amount</CardDescription>
+                      <CardTitle className="text-2xl">
+                        {new Intl.NumberFormat('en-MV', {
+                          style: 'currency',
+                          currency: 'MVR',
+                        }).format(previewData.data.totals.averageAmount)}
+                      </CardTitle>
+                    </CardHeader>
+                  </Card>
+                </div>
+
+                <div>
+                  <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                    Status Breakdown
+                  </h3>
+                  <div className="rounded-lg border border-border/60">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Count</TableHead>
+                          <TableHead>Total Amount</TableHead>
+                          <TableHead>Percentage</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {previewData.data.statusBreakdown.map((item: any) => (
+                          <TableRow key={item.status}>
+                            <TableCell className="font-medium">{item.status}</TableCell>
+                            <TableCell>{item.count.toLocaleString()}</TableCell>
+                            <TableCell>
+                              {new Intl.NumberFormat('en-MV', {
+                                style: 'currency',
+                                currency: 'MVR',
+                              }).format(item.totalAmount)}
+                            </TableCell>
+                            <TableCell>{item.percentage.toFixed(1)}%</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                {previewData.data.topIslands.length > 0 && (
+                  <div>
+                    <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                      Top Islands
+                    </h3>
+                    <div className="rounded-lg border border-border/60">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Island</TableHead>
+                            <TableHead>Count</TableHead>
+                            <TableHead>Total Amount</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {previewData.data.topIslands.map((item: any) => (
+                            <TableRow key={item.island}>
+                              <TableCell className="font-medium">{item.island}</TableCell>
+                              <TableCell>{item.count.toLocaleString()}</TableCell>
+                              <TableCell>
+                                {new Intl.NumberFormat('en-MV', {
+                                  style: 'currency',
+                                  currency: 'MVR',
+                                }).format(item.totalAmount)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {previewData.reportType === 'DETAILED' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {previewData.data.length} entries
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border/60">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Registry No</TableHead>
+                        <TableHead>Agreement</TableHead>
+                        <TableHead>Borrowers</TableHead>
+                        <TableHead>Island</TableHead>
+                        <TableHead>Branch</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Loan Amount</TableHead>
+                        <TableHead>Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {previewData.data.slice(0, 20).map((row: any, idx: number) => (
+                        <TableRow key={idx}>
+                          <TableCell className="font-medium">{row.no}</TableCell>
+                          <TableCell>{row.agreementNumber}</TableCell>
+                          <TableCell>{row.borrowers.join(', ')}</TableCell>
+                          <TableCell>{row.island}</TableCell>
+                          <TableCell>{row.branch}</TableCell>
+                          <TableCell>{row.status}</TableCell>
+                          <TableCell>
+                            {new Intl.NumberFormat('en-MV', {
+                              style: 'currency',
+                              currency: 'MVR',
+                            }).format(row.loanAmount)}
+                          </TableCell>
+                          <TableCell>{new Date(row.date).toLocaleDateString('en-GB')}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                {previewData.data.length > 20 && (
+                  <p className="text-sm text-muted-foreground">
+                    Showing first 20 of {previewData.data.length} entries. Download the full report to see all data.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {previewData.reportType === 'CUSTOM' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {previewData.data.length} branches
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border/60">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Branch</TableHead>
+                        <TableHead>Agreements</TableHead>
+                        <TableHead>Total Amount</TableHead>
+                        <TableHead>Average Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {previewData.data.map((row: any, idx: number) => (
+                        <TableRow key={idx}>
+                          <TableCell className="font-medium">{row.branch}</TableCell>
+                          <TableCell>{row.count.toLocaleString()}</TableCell>
+                          <TableCell>
+                            {new Intl.NumberFormat('en-MV', {
+                              style: 'currency',
+                              currency: 'MVR',
+                            }).format(row.totalAmount)}
+                          </TableCell>
+                          <TableCell>
+                            {new Intl.NumberFormat('en-MV', {
+                              style: 'currency',
+                              currency: 'MVR',
+                            }).format(row.averageAmount)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
