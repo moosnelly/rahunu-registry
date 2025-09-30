@@ -546,13 +546,8 @@ export default function EntriesPage() {
                               </DropdownMenuItem>
                               {canWrite ? <DropdownMenuSeparator /> : null}
                               {canWrite ? (
-                                <DropdownMenuItem
-                                  onSelect={(event) => {
-                                    event.preventDefault();
-                                    window.location.href = `/entries/${entry.id}/edit`;
-                                  }}
-                                >
-                                  Edit entry
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/entries/${entry.id}/edit`}>Edit entry</Link>
                                 </DropdownMenuItem>
                               ) : null}
                             </DropdownMenuContent>

@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Download, PlusCircle, X } from 'lucide-react';
 import type { AttachmentRecord as GenericAttachmentRecord, AttachmentValue as GenericAttachmentValue } from '@/lib/attachments';
 import { sanitizeAttachmentRecord, sanitizeAttachmentValue } from '@/lib/attachments';
@@ -146,6 +147,7 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
   });
   const [errors, setErrors] = useState<FlattenedError<FormData> | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingEntry, setLoadingEntry] = useState(mode === 'edit');
   const [serverError, setServerError] = useState<string | null>(null);
   const storageKey = useMemo(() => (mode === 'edit' && id ? `entry-attachments-${id}` : 'entry-attachments-new'), [mode, id]);
   const [attachments, setAttachments] = useState<AttachmentRecord>(createEmptyAttachmentRecord);
@@ -196,6 +198,7 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
     const controller = new AbortController();
 
     const loadEntry = async () => {
+      setLoadingEntry(true);
       try {
         const response = await fetch(`/api/entries/${id}`, { signal: controller.signal });
         if (!response.ok) throw new Error('Failed to fetch entry');
@@ -228,6 +231,10 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
         if ((error as Error).name !== 'AbortError') {
           console.error('Failed to load entry', error);
           setServerError('Unable to load entry details. Please refresh and try again.');
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoadingEntry(false);
         }
       }
     };
@@ -451,6 +458,38 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
             You have read-only access (Viewer).
           </p>
         </div>
+      </div>
+    );
+  }
+  
+  // Show skeleton while loading entry data in edit mode
+  if (loadingEntry) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col gap-2">
+          <Badge variant="outline" className="w-fit uppercase tracking-widest text-xs text-muted-foreground">
+            Edit Entry
+          </Badge>
+          <h1 className="text-3xl font-semibold text-foreground">Registry Entry</h1>
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            Loading entry details...
+          </p>
+        </div>
+        <Card className="backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/40">
+          <CardHeader className="space-y-2 border-b border-border/60">
+            <CardTitle className="text-xl text-foreground">Agreement Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6 pt-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
