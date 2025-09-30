@@ -7,7 +7,7 @@ import useSWR from 'swr';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { endOfDay, startOfDay, startOfYear, subDays, format } from 'date-fns';
-import { CalendarIcon, Download, ExternalLink, FileText, History, MoreHorizontal, SearchIcon, Trash2, XIcon } from 'lucide-react';
+import { CalendarIcon, Download, Edit, ExternalLink, Eye, FileText, History, MoreHorizontal, SearchIcon, Trash2, XIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -574,7 +574,10 @@ export default function EntriesPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-40">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onSelect={() => handleOpenEntry(entry)}>Quick view</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => handleOpenEntry(entry)} className="gap-2">
+                                <Eye className="h-4 w-4" />
+                                Quick view
+                              </DropdownMenuItem>
                               <DropdownMenuItem onSelect={() => handleOpenAudit(entry.id)} className="gap-2">
                                 <History className="h-4 w-4" />
                                 View history
@@ -582,7 +585,10 @@ export default function EntriesPage() {
                               {canWrite ? <DropdownMenuSeparator /> : null}
                               {canWrite ? (
                                 <DropdownMenuItem asChild>
-                                  <Link href={`/entries/${entry.id}/edit`}>Edit entry</Link>
+                                  <Link href={`/entries/${entry.id}/edit`} className="gap-2 flex items-center">
+                                    <Edit className="h-4 w-4" />
+                                    Edit entry
+                                  </Link>
                                 </DropdownMenuItem>
                               ) : null}
                               {canWrite ? (
