@@ -127,7 +127,7 @@ const createFileFromDataUrl = (dataUrl: string, fileName: string): File => {
 
 export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: string }) {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const role = (session?.user as any)?.role;
   const canWrite = role === 'ADMIN' || role === 'DATA_ENTRY';
   const [data, setData] = useState<FormData>({
@@ -422,7 +422,39 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
       setLoading(false);
     }
   };
-  if(!canWrite) return <p>You have read-only access (Viewer).</p>;
+  
+  // Show loading state while session is being fetched
+  if (status === 'loading') {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col gap-2">
+          <Badge variant="outline" className="w-fit uppercase tracking-widest text-xs text-muted-foreground">
+            {mode === 'create' ? 'New Entry' : 'Edit Entry'}
+          </Badge>
+          <h1 className="text-3xl font-semibold text-foreground">Registry Entry</h1>
+          <p className="max-w-2xl text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Only show read-only message after session has loaded
+  if (!canWrite) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col gap-2">
+          <Badge variant="outline" className="w-fit uppercase tracking-widest text-xs text-muted-foreground">
+            {mode === 'create' ? 'New Entry' : 'Edit Entry'}
+          </Badge>
+          <h1 className="text-3xl font-semibold text-foreground">Registry Entry</h1>
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            You have read-only access (Viewer).
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
