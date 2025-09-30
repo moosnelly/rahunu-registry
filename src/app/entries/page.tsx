@@ -221,10 +221,13 @@ export default function EntriesPage() {
   const canWrite = role === 'ADMIN' || role === 'DATA_ENTRY';
   const [filters, setFilters] = useState<Filters>(() => ({ ...defaultFilters }));
   const [debouncedFilters, setDebouncedFilters] = useState(filters);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       setDebouncedFilters(filters);
+      setCurrentPage(1); // Reset to first page when filters change
     }, 300);
     return () => window.clearTimeout(timeout);
   }, [filters]);
@@ -245,8 +248,12 @@ export default function EntriesPage() {
     if (amountConfig?.min !== undefined) params.set('minAmount', String(amountConfig.min));
     if (amountConfig?.max !== undefined) params.set('maxAmount', String(amountConfig.max));
 
+    // Add pagination parameters
+    params.set('page', String(currentPage));
+    params.set('size', String(pageSize));
+
     return params.toString();
-  }, [debouncedFilters]);
+  }, [debouncedFilters, currentPage, pageSize]);
 
   const { data, error, isLoading } = useSWR<ApiResponse>(`/api/entries${queryString ? `?${queryString}` : ''}`, fetcher, {
     refreshInterval: 60_000,
@@ -561,6 +568,60 @@ export default function EntriesPage() {
             </Table>
           )}
         </CardContent>
+        {!error && total > 0 && (
+          <CardFooter className="flex flex-col gap-4 border-t pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm text-muted-foreground">
+              Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, total)} of {total.toLocaleString()} entries
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentPage === 1 || isLoading}
+              >
+                Previous
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, Math.ceil(total / pageSize)) }, (_, i) => {
+                  const totalPages = Math.ceil(total / pageSize);
+                  let pageNumber: number;
+                  
+                  if (totalPages <= 5) {
+                    pageNumber = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNumber = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNumber = totalPages - 4 + i;
+                  } else {
+                    pageNumber = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNumber}
+                      variant={currentPage === pageNumber ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNumber)}
+                      disabled={isLoading}
+                      className="h-9 w-9 p-0"
+                    >
+                      {pageNumber}
+                    </Button>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.min(Math.ceil(total / pageSize), prev + 1))}
+                disabled={currentPage >= Math.ceil(total / pageSize) || isLoading}
+              >
+                Next
+              </Button>
+            </div>
+          </CardFooter>
+        )}
       </Card>
       <EntryDetailsModal entry={selectedEntry} open={isModalOpen} onClose={handleCloseModal} canEdit={canWrite} />
       <EntryAuditDialog entryId={auditEntryId} open={isAuditOpen} onClose={handleCloseAudit} />
