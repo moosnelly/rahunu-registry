@@ -20,7 +20,6 @@ type Borrower = { fullName: string; nationalId: string };
 type FormData = {
   no: number;
   address: string;
-  extra: string;
   island: string;
   formNumber: string;
   date: string;
@@ -134,7 +133,6 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
   const [data, setData] = useState<FormData>({
     no: 0,
     address: '',
-    extra: '',
     island: '',
     formNumber: '',
     date: '',
@@ -206,7 +204,6 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
         setData({
           no: entry.no ?? 0,
           address: entry.address ?? '',
-          extra: entry.extra ?? '',
           island: entry.island ?? '',
           formNumber: entry.formNumber ?? '',
           date: entry.date ? entry.date.slice(0, 10) : '',
@@ -516,15 +513,6 @@ export default function EntryForm({ mode, id }: { mode: 'create' | 'edit'; id?: 
                 value={data.address}
                 onChange={(e) => setData({ ...data, address: e.target.value })}
                 placeholder="H. Vinares"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="extra">Dhivehi Address / Notes</Label>
-              <Input
-                id="extra"
-                value={data.extra}
-                onChange={(e) => setData({ ...data, extra: e.target.value })}
-                placeholder="ދިވެހި ތަފާތު"
               />
             </div>
             <div className="space-y-2">

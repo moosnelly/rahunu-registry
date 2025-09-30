@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
   const attachments = sanitizeAttachmentRecord(data.attachments);
   const created = await prisma.registryEntry.create({
     data: {
-      no: data.no, address: data.address, extra: data.extra, island: data.island, formNumber: data.formNumber,
+      no: data.no, address: data.address, island: data.island, formNumber: data.formNumber,
       date: new Date(data.date), branch: data.branch, agreementNumber: data.agreementNumber, status: data.status as any,
       loanAmount: data.loanAmount,
       dateOfCancelled: data.dateOfCancelled ? new Date(data.dateOfCancelled) : null,

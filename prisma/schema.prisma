@@ -52,7 +52,6 @@ model RegistryEntry {
   id               String       @id @default(cuid())
   no               Int          @unique
   address          String
-  extra            String
   island           String
   formNumber       String
   date             DateTime

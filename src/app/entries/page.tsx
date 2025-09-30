@@ -63,7 +63,6 @@ type Entry = {
   branch?: string | null;
   formNumber?: string | null;
   address?: string | null;
-  extra?: string | null;
   dateOfCancelled?: string | null;
   attachments?: EntryAttachmentRecord | null;
 };
@@ -746,12 +745,6 @@ function EntryDetailsModal({ entry, open, onClose, canEdit }: EntryDetailsModalP
               <div className="space-y-1">
                 <p className="text-xs font-medium uppercase text-muted-foreground">Address</p>
                 <p className="text-sm text-foreground">{entry.address}</p>
-              </div>
-            ) : null}
-            {entry.extra ? (
-              <div className="space-y-1">
-                <p className="text-xs font-medium uppercase text-muted-foreground">Additional Notes</p>
-                <p className="text-sm text-foreground whitespace-pre-line">{entry.extra}</p>
               </div>
             ) : null}
           </CardContent>

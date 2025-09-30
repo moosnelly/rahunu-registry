@@ -9,7 +9,6 @@ const AttachmentValueSchema = z.object({
 export const EntrySchema = z.object({
   no: z.number().int().positive(),
   address: z.string().min(1),
-  extra: z.string().min(1),
   island: z.string().min(1),
   formNumber: z.string().min(1).regex(/^\d{1,5}\/\d{4}$/),
   date: z.string().refine(v=>!Number.isNaN(Date.parse(v))),

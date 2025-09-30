@@ -32,7 +32,6 @@ async function main() {
 
   const entryCoreData = {
     address: "Sunset Villa (reg 2477)",
-    extra: "ސަންސެޓްވިލާ/ސ.ހިތަދޫ",
     island: "S.Hithadhoo",
     formNumber: "41/2025",
     date: new Date("2025-06-01"),
