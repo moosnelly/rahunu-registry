@@ -2,7 +2,6 @@
 
 import { useMemo } from "react"
 import {
-  CircleUserRound,
   FileSpreadsheet,
   Gauge,
   Landmark,
@@ -54,14 +53,6 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         icon: BarChart3,
       },
     ]
-
-    if (role === "ADMIN" || role === "DATA_ENTRY") {
-      baseItems.push({
-        title: "New Entry",
-        url: "/entries/new",
-        icon: CircleUserRound,
-      })
-    }
 
     if (role === "ADMIN") {
       baseItems.push(
