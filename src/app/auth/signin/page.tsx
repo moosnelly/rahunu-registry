@@ -28,7 +28,7 @@ export default function SignInPage() {
       redirect: false,
       email: emailValue,
       password: passwordValue,
-      callbackUrl: "/entries",
+      callbackUrl: "/dashboard",
     });
 
     if (result?.error) {
