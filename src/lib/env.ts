@@ -16,6 +16,11 @@ export class EnvironmentValidationError extends Error {
  * @throws EnvironmentValidationError if validation fails
  */
 export function validateEnvironment(): void {
+  // Skip validation during Next.js build phase
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return;
+  }
+
   const errors: string[] = [];
 
   // Validate AUTH_SECRET
