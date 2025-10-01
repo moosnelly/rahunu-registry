@@ -216,7 +216,7 @@ export default function SettingsClient() {
 
   const resetCreateForm = () => {
     setCreateState({
-      category: activeTab,
+      category: activeTab === 'DELETED_ENTRIES' ? 'ISLAND' : activeTab,
       value: '',
       displayName: '',
       sortOrder: 0,
@@ -229,7 +229,7 @@ export default function SettingsClient() {
     try {
       const payload = {
         ...createState,
-        category: activeTab,
+        category: activeTab === 'DELETED_ENTRIES' ? 'ISLAND' : activeTab,
         displayName: createState.displayName.trim() || createState.value.trim(),
       };
 
