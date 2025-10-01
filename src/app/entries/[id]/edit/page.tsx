@@ -38,7 +38,7 @@ export default async function EditEntry(props: PageProps) {
     dateOfCancelled: entry.dateOfCancelled ? entry.dateOfCancelled.toISOString().slice(0, 10) : null,
     dateOfCompleted: entry.dateOfCompleted ? entry.dateOfCompleted.toISOString().slice(0, 10) : null,
     borrowers: entry.borrowers.length > 0
-      ? entry.borrowers.map((borrower) => ({
+      ? entry.borrowers.map((borrower: { fullName: string; nationalId: string }) => ({
           fullName: borrower.fullName ?? '',
           nationalId: borrower.nationalId ?? '',
         }))
