@@ -261,7 +261,7 @@ export default function EntryForm({ mode, id, initialData }: { mode: 'create' | 
     // If we have initialData from server, use it immediately
     if (initialData) {
       setData({
-        no: initialData.no ?? 0,
+        no: String(initialData.no ?? 0),
         address: initialData.address ?? '',
         island: initialData.island ?? '',
         formNumber: initialData.formNumber ?? '',
@@ -295,7 +295,7 @@ export default function EntryForm({ mode, id, initialData }: { mode: 'create' | 
         const entry = await response.json();
 
         setData({
-          no: entry.no ?? 0,
+          no: String(entry.no ?? 0),
           address: entry.address ?? '',
           island: entry.island ?? '',
           formNumber: entry.formNumber ?? '',
