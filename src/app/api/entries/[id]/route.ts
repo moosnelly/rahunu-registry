@@ -6,6 +6,7 @@ import { authOptions } from "@/auth/options";
 import { canRead, canWrite, canDelete } from "@/lib/rbac";
 import { AuditAction } from "@prisma/client";
 import { sanitizeAttachmentRecord } from "@/lib/attachments";
+import { validateAttachmentRecord, FileValidationError } from "@/lib/file-validation";
 
 function shallowDiff(prev:any, next:any){
   const diffs:any = {};
@@ -76,6 +77,17 @@ export async function PUT(req: NextRequest, context: RouteContext) {
   const parsed = EntrySchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ errors: parsed.error.flatten() }, { status: 400 });
   const d = parsed.data;
+  
+  // Validate file attachments on server side
+  try {
+    validateAttachmentRecord(d.attachments || {});
+  } catch (error) {
+    if (error instanceof FileValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    throw error;
+  }
+  
   const attachments = sanitizeAttachmentRecord(d.attachments);
   
   // Validate that the actor user exists in the database

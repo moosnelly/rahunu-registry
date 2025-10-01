@@ -21,7 +21,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://rahunu:rahunu@db:5432/rahunu?schema=public
-      AUTH_SECRET: ${AUTH_SECRET:-changeme}
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET environment variable is required}
       AUTH_URL: http://localhost:3000
       NODE_ENV: production
       UPLOAD_DIR: /app/storage/uploads

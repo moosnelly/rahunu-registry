@@ -6,6 +6,7 @@ import { authOptions } from "@/auth/options";
 import { canRead, canWrite } from "@/lib/rbac";
 import { AuditAction, Prisma } from "@prisma/client";
 import { sanitizeAttachmentRecord } from "@/lib/attachments";
+import { validateAttachmentRecord, FileValidationError } from "@/lib/file-validation";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -156,6 +157,17 @@ export async function POST(req: NextRequest) {
   const parsed = EntrySchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ errors: parsed.error.flatten() }, { status: 400 });
   const data = parsed.data;
+  
+  // Validate file attachments on server side
+  try {
+    validateAttachmentRecord(data.attachments || {});
+  } catch (error) {
+    if (error instanceof FileValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    throw error;
+  }
+  
   const attachments = sanitizeAttachmentRecord(data.attachments);
   
   // Validate that the actor user exists in the database

@@ -20,7 +20,7 @@ services:
     command: sh -lc "npm install && npx prisma generate && npm run dev"
     environment:
       DATABASE_URL: postgres://rahunu:rahunu@db:5432/rahunu_dev?schema=public
-      AUTH_SECRET: ${AUTH_SECRET:-changeme_dev}
+      AUTH_SECRET: "${AUTH_SECRET:?AUTH_SECRET environment variable is required}"
       AUTH_URL: http://localhost:3000
       NODE_ENV: development
       UPLOAD_DIR: /app/storage/uploads

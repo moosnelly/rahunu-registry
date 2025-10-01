@@ -36,3 +36,10 @@ yarn-error.log*
 # Typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Security audit files
+SECURITY_AUDIT_REPORT.md
+SECURITY_FIXES_CHECKLIST.md
+SECURITY_CODE_EXAMPLES.md
+SECURITY_FIXES_APPLIED.md
+ENVIRONMENT_SETUP.md
