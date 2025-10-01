@@ -2,7 +2,8 @@ import { PrismaClient } from "@prisma/client";
 import { validateEnvironment } from "./env";
 
 // Validate environment variables on server startup
-if (typeof window === 'undefined') {
+// Skip during Next.js build phase (when env vars aren't injected yet)
+if (typeof window === 'undefined' && process.env.DATABASE_URL) {
   validateEnvironment();
 }
 
