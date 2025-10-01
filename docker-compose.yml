@@ -22,7 +22,7 @@ services:
     environment:
       DATABASE_URL: postgres://rahunu:rahunu@db:5432/rahunu?schema=public
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET environment variable is required}
-      AUTH_URL: http://localhost:3000
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       NODE_ENV: production
       UPLOAD_DIR: /app/storage/uploads
     ports:

@@ -1,163 +1,176 @@
-# Docker Setup Guide
+# Docker Deployment Guide
 
-This project uses Docker for both development and production deployments with PostgreSQL as the database.
+## Quick Start (Local Testing)
 
-## Prerequisites
+For local testing with Docker:
 
-- Docker
-- Docker Compose
+```bash
+# Generate AUTH_SECRET
+export AUTH_SECRET=$(openssl rand -base64 32)
+
+# Start the application
+docker-compose up -d
+
+# Access at http://localhost:3000
+```
+
+The default `docker-compose.yml` is configured for **local testing** with HTTP.
+
+---
+
+## Production Deployment
+
+For production deployment with HTTPS:
+
+### 1. Create Environment File
+
+```bash
+# Create .env file
+cat > .env << EOF
+AUTH_SECRET=$(openssl rand -base64 32)
+NEXTAUTH_URL=https://your-domain.com
+POSTGRES_PASSWORD=$(openssl rand -base64 24)
+EOF
+```
+
+### 2. Deploy with Production Configuration
+
+```bash
+# Use production docker-compose file
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### 3. Set Up Reverse Proxy (Nginx/Caddy)
+
+The application runs on port 3000. You need a reverse proxy with SSL/TLS:
+
+**Example Nginx Configuration:**
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name your-domain.com;
+
+    ssl_certificate /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+
+# Redirect HTTP to HTTPS
+server {
+    listen 80;
+    server_name your-domain.com;
+    return 301 https://$server_name$request_uri;
+}
+```
+
+---
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and adjust the values:
+### Required Variables
 
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `AUTH_SECRET` | NextAuth secret (min 32 chars) | Generate with `openssl rand -base64 32` |
+| `NEXTAUTH_URL` | Application URL | Local: `http://localhost:3000`<br>Production: `https://your-domain.com` |
+
+### Optional Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `POSTGRES_PASSWORD` | Database password | `rahunu` (local only) |
+| `UPLOAD_DIR` | Upload directory | `/app/storage/uploads` |
+
+---
+
+## Common Issues & Solutions
+
+### Issue: HTTPS Redirect Error
+
+**Symptoms:**
+- App loads on HTTP
+- Login redirects to HTTPS
+- Connection refused error
+
+**Cause:**
+NextAuth.js requires `NEXTAUTH_URL` environment variable. Without it, NextAuth enforces HTTPS in production mode.
+
+**Solution:**
+1. **For local testing:** Use default `docker-compose.yml` (already configured)
+2. **For production:** Set `NEXTAUTH_URL=https://your-domain.com` in `.env` file
+
+### Issue: AUTH_SECRET Required Error
+
+**Solution:**
 ```bash
-cp .env.example .env
+# Generate and set AUTH_SECRET
+echo "AUTH_SECRET=$(openssl rand -base64 32)" >> .env
 ```
 
-**Important:** Generate a secure `AUTH_SECRET` for production:
+### Issue: Database Connection Failed
 
-```bash
-openssl rand -base64 32
+**Check:**
+1. Database service is healthy: `docker-compose ps`
+2. Check logs: `docker-compose logs db`
+3. Verify DATABASE_URL format is correct
+
+---
+
+## File Structure
+
+```
+rahunu-registry/
+├── docker-compose.yml       # Local testing (HTTP)
+├── docker-compose.dev.yml   # Development with hot reload
+├── docker-compose.prod.yml  # Production (HTTPS required)
+├── Dockerfile               # Application container
+├── .env                     # Environment variables (create this)
+└── .env.example             # Example environment file
 ```
 
-## Development Environment
+---
 
-Use `docker-compose.dev.yml` for development with hot-reload:
+## Docker Compose Files Comparison
 
+| File | Purpose | NEXTAUTH_URL | Database Port Exposed | NODE_ENV |
+|------|---------|--------------|----------------------|----------|
+| `docker-compose.yml` | Local testing | Defaults to HTTP | Yes (5432) | production |
+| `docker-compose.dev.yml` | Development | HTTP | Yes (5432) | development |
+| `docker-compose.prod.yml` | Production | HTTPS required | No | production |
+
+---
+
+## Commands
+
+### Start Services
 ```bash
-# Start development environment
-docker-compose -f docker-compose.dev.yml up
-
-# Stop development environment
-docker-compose -f docker-compose.dev.yml down
-
-# Stop and remove volumes (fresh start)
-docker-compose -f docker-compose.dev.yml down -v
-```
-
-**Development Features:**
-- PostgreSQL database: `rahunu_dev`
-- Hot-reload enabled
-- Source code mounted as volume
-- Runs on `http://localhost:3000`
-- Database accessible on `localhost:5432`
-
-## Production Environment
-
-Use `docker-compose.yml` for production:
-
-```bash
-# Build and start production environment
+# Local testing
 docker-compose up -d
 
-# View logs
-docker-compose logs -f
+# Development with hot reload
+docker-compose -f docker-compose.dev.yml up
 
-# Stop production environment
+# Production
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### Stop Services
+```bash
 docker-compose down
-
-# Rebuild after code changes
-docker-compose up -d --build
-```
-
-**Production Features:**
-- PostgreSQL database: `rahunu`
-- Optimized multi-stage Docker build
-- Auto-runs database migrations on startup
-- Persistent volumes for database and uploads
-- Runs on `http://localhost:3000`
-
-## Database Management
-
-### Run Migrations
-
-Migrations are automatically applied on container startup via the entrypoint script.
-
-To manually run migrations:
-
-```bash
-# Development
-docker-compose -f docker-compose.dev.yml exec web npx prisma migrate deploy
-
-# Production
-docker-compose exec web npx prisma migrate deploy
-```
-
-### Create New Migration
-
-```bash
-# Development (local)
-npx prisma migrate dev --name your_migration_name
-
-# Then restart containers to apply
-docker-compose -f docker-compose.dev.yml restart web
-```
-
-### Access Database
-
-```bash
-# Development
-docker-compose -f docker-compose.dev.yml exec db psql -U rahunu -d rahunu_dev
-
-# Production
-docker-compose exec db psql -U rahunu -d rahunu
-```
-
-### Seed Database
-
-```bash
-# Development
-docker-compose -f docker-compose.dev.yml exec web npm run seed
-
-# Production
-docker-compose exec web npm run seed
-```
-
-## Volumes
-
-The setup uses Docker volumes for data persistence:
-
-### Development
-- `dbdev`: PostgreSQL data
-- `uploads_dev`: File uploads
-- Source code mounted from `./` to `/app`
-
-### Production
-- `db`: PostgreSQL data
-- `uploads`: File uploads
-
-## Troubleshooting
-
-### Port Already in Use
-
-If port 3000 or 5432 is already in use, modify the ports in the compose file:
-
-```yaml
-ports:
-  - "3001:3000"  # Map to different host port
-```
-
-### Database Connection Issues
-
-Ensure the database health check passes before the web service starts. This is configured in the compose files with `depends_on` and health checks.
-
-### Reset Everything
-
-To completely reset (⚠️ this deletes all data):
-
-```bash
-# Development
-docker-compose -f docker-compose.dev.yml down -v
-docker-compose -f docker-compose.dev.yml up
-
-# Production
-docker-compose down -v
-docker-compose up -d
 ```
 
 ### View Logs
-
 ```bash
 # All services
 docker-compose logs -f
@@ -167,40 +180,118 @@ docker-compose logs -f web
 docker-compose logs -f db
 ```
 
-## Production Deployment
+### Rebuild
+```bash
+# Rebuild without cache
+docker-compose build --no-cache
 
-For production deployment on a server:
+# Rebuild and restart
+docker-compose up -d --build
+```
 
-1. Set secure environment variables:
-   ```bash
-   export AUTH_SECRET="your-secure-secret-here"
-   export AUTH_URL="https://yourdomain.com"
-   ```
+### Database Management
+```bash
+# Run migrations
+docker-compose exec web npx prisma migrate deploy
 
-2. Update database credentials in `docker-compose.yml`
+# Access database shell
+docker-compose exec db psql -U rahunu -d rahunu
 
-3. Consider using a reverse proxy (nginx, traefik) for HTTPS
+# Backup database
+docker-compose exec db pg_dump -U rahunu rahunu > backup.sql
 
-4. Set up regular database backups:
-   ```bash
-   docker-compose exec db pg_dump -U rahunu rahunu > backup_$(date +%Y%m%d).sql
-   ```
+# Restore database
+docker-compose exec -T db psql -U rahunu rahunu < backup.sql
+```
 
-## Architecture
+---
 
-### Dockerfile (Multi-stage Build)
-1. **deps**: Installs dependencies
-2. **builder**: Generates Prisma client and builds Next.js
-3. **runner**: Minimal production image with only necessary files
+## Production Checklist
 
-### Services
-- **db**: PostgreSQL 15 database
-- **web**: Next.js application
+Before deploying to production:
 
-## File Uploads
+- [ ] Generate strong `AUTH_SECRET` (32+ characters)
+- [ ] Set `NEXTAUTH_URL` to HTTPS URL
+- [ ] Use strong `POSTGRES_PASSWORD`
+- [ ] Set up SSL/TLS certificate (Let's Encrypt recommended)
+- [ ] Configure reverse proxy (Nginx/Caddy)
+- [ ] Set up firewall rules
+- [ ] Configure database backups
+- [ ] Set up monitoring and logging
+- [ ] Test SSL/TLS configuration (https://www.ssllabs.com/ssltest/)
+- [ ] Enable automatic container restarts
+- [ ] Review security headers
+- [ ] Set up log rotation
 
-Uploaded files are stored in Docker volumes:
-- Development: `uploads_dev` volume mounted at `/app/storage/uploads`
-- Production: `uploads` volume mounted at `/app/storage/uploads`
+---
 
-These volumes persist even when containers are stopped, ensuring files are not lost.
+## Security Best Practices
+
+1. **Never expose database port** in production
+2. **Use HTTPS only** in production
+3. **Generate unique secrets** for each environment
+4. **Rotate secrets** regularly (every 90 days)
+5. **Use Docker secrets** for sensitive data in swarm mode
+6. **Keep containers updated** regularly
+7. **Limit container resources** (CPU, memory)
+8. **Use read-only file systems** where possible
+9. **Run containers as non-root** user
+10. **Enable Docker security scanning**
+
+---
+
+## Monitoring
+
+### Health Checks
+
+The application includes health checks:
+- Database: `pg_isready` check every 5 seconds
+- Web: HTTP check on `/api/auth/providers` every 30 seconds
+
+### View Health Status
+```bash
+docker-compose ps
+```
+
+### Restart Unhealthy Containers
+```bash
+docker-compose restart web
+```
+
+---
+
+## Troubleshooting
+
+### Container Won't Start
+```bash
+# Check logs
+docker-compose logs web
+
+# Check environment variables
+docker-compose exec web env | grep -E 'AUTH_SECRET|NEXTAUTH_URL|DATABASE_URL'
+```
+
+### Database Connection Issues
+```bash
+# Test database connectivity
+docker-compose exec web npx prisma db pull
+
+# Check database status
+docker-compose exec db pg_isready -U rahunu
+```
+
+### Reset Everything
+```bash
+# Stop and remove everything (⚠️ destroys data)
+docker-compose down -v
+docker-compose up -d
+```
+
+---
+
+## Support
+
+For more information:
+- [Docker Compose Documentation](https://docs.docker.com/compose/)
+- [NextAuth.js Configuration](https://next-auth.js.org/configuration/options)
+- [Prisma with Docker](https://www.prisma.io/docs/guides/deployment/deployment-guides/deploying-to-docker)
