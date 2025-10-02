@@ -36,7 +36,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgres://rahunu:rahunu@db:5432/rahunu?schema=public
+      DATABASE_URL: postgres://rahunu:rahunu@db:5432/rahunu?schema=public&sslmode=disable
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET environment variable is required}
       NEXTAUTH_URL: ${NEXTAUTH_URL:?NEXTAUTH_URL environment variable is required (must use HTTPS)}
       NODE_ENV: production
