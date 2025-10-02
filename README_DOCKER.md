@@ -18,61 +18,44 @@ The default `docker-compose.yml` is configured for **local testing** with HTTP.
 
 ---
 
-## Production Deployment
+## Production Deployment with HTTPS
 
-For production deployment with HTTPS:
+🚀 **For production deployment, see [PRODUCTION_DEPLOYMENT.md](./PRODUCTION_DEPLOYMENT.md) for the complete guide.**
 
-### 1. Create Environment File
+### Quick Production Setup
 
 ```bash
-# Create .env file
+# 1. Set up SSL certificate (automated)
+chmod +x init-ssl.sh
+./init-ssl.sh your-domain.com admin@your-domain.com
+
+# 2. Create environment file
 cat > .env << EOF
 AUTH_SECRET=$(openssl rand -base64 32)
 NEXTAUTH_URL=https://your-domain.com
 POSTGRES_PASSWORD=$(openssl rand -base64 24)
 EOF
-```
 
-### 2. Deploy with Production Configuration
-
-```bash
-# Use production docker-compose file
+# 3. Start all services
 docker-compose -f docker-compose.prod.yml up -d
+
+# 4. Access at https://your-domain.com
 ```
 
-### 3. Set Up Reverse Proxy (Nginx/Caddy)
+### What's Included
 
-The application runs on port 3000. You need a reverse proxy with SSL/TLS:
+The production setup includes:
+- ✅ **Nginx** reverse proxy with SSL termination
+- ✅ **Let's Encrypt** automatic SSL certificates
+- ✅ **Certbot** for automatic certificate renewal
+- ✅ **Security headers** and HTTPS enforcement
+- ✅ **PostgreSQL** database (internal network only)
 
-**Example Nginx Configuration:**
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name your-domain.com;
+### Documentation
 
-    ssl_certificate /path/to/cert.pem;
-    ssl_certificate_key /path/to/key.pem;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-
-# Redirect HTTP to HTTPS
-server {
-    listen 80;
-    server_name your-domain.com;
-    return 301 https://$server_name$request_uri;
-}
-```
+- [PRODUCTION_DEPLOYMENT.md](./PRODUCTION_DEPLOYMENT.md) - Quick start guide
+- [SSL_SETUP.md](./SSL_SETUP.md) - Detailed SSL configuration
+- [SECURITY_AUDIT_REPORT.md](./SECURITY_AUDIT_REPORT.md) - Security review
 
 ---
 
