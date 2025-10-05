@@ -66,7 +66,7 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) 
   }, [shortcuts, enabled])
 }
 
-export function useGlobalKeyboardShortcuts() {
+export function useGlobalKeyboardShortcuts(userRole?: string | null) {
   const router = useRouter()
   const { setTheme, theme, resolvedTheme } = useTheme()
 
@@ -92,7 +92,10 @@ export function useGlobalKeyboardShortcuts() {
     }
   }, [])
 
-  const shortcuts: KeyboardShortcut[] = [
+  const isAdmin = userRole === 'ADMIN'
+  const canWrite = userRole === 'ADMIN' || userRole === 'DATA_ENTRY'
+
+  const allShortcuts: KeyboardShortcut[] = [
     // Navigation shortcuts (using Alt to avoid browser conflicts)
     {
       key: 'd',
@@ -115,38 +118,47 @@ export function useGlobalKeyboardShortcuts() {
       action: () => router.push('/reports'),
       category: 'Navigation',
     },
-    {
-      key: 'u',
-      ctrl: true,
-      shift: true,
-      description: 'Go to User Management (Admin)',
-      action: () => router.push('/admin/users'),
-      category: 'Navigation',
-    },
-    {
-      key: 'a',
-      ctrl: true,
-      shift: true,
-      description: 'Go to Audit Log (Admin)',
-      action: () => router.push('/admin/audit'),
-      category: 'Navigation',
-    },
-    {
-      key: 's',
-      ctrl: true,
-      shift: true,
-      description: 'Go to System Settings (Admin)',
-      action: () => router.push('/admin/settings'),
-      category: 'Navigation',
-    },
-    // Action shortcuts
-    {
-      key: 'n',
-      alt: true,
-      description: 'Create New Entry',
-      action: () => router.push('/entries/new'),
-      category: 'Actions',
-    },
+    // Admin-only navigation shortcuts
+    ...(isAdmin
+      ? [
+          {
+            key: 'u',
+            ctrl: true,
+            shift: true,
+            description: 'Go to User Management',
+            action: () => router.push('/admin/users'),
+            category: 'Navigation' as const,
+          },
+          {
+            key: 'a',
+            ctrl: true,
+            shift: true,
+            description: 'Go to Audit Log',
+            action: () => router.push('/admin/audit'),
+            category: 'Navigation' as const,
+          },
+          {
+            key: 's',
+            ctrl: true,
+            shift: true,
+            description: 'Go to System Settings',
+            action: () => router.push('/admin/settings'),
+            category: 'Navigation' as const,
+          },
+        ]
+      : []),
+    // Action shortcuts (only for users with write permission)
+    ...(canWrite
+      ? [
+          {
+            key: 'n',
+            alt: true,
+            description: 'Create New Entry',
+            action: () => router.push('/entries/new'),
+            category: 'Actions' as const,
+          },
+        ]
+      : []),
     // UI shortcuts
     {
       key: 't',
@@ -182,6 +194,6 @@ export function useGlobalKeyboardShortcuts() {
     },
   ]
 
-  return shortcuts
+  return allShortcuts
 }
 

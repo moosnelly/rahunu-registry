@@ -9,6 +9,7 @@ The application includes a comprehensive keyboard shortcuts system that allows u
 ## Features
 
 ### 1. Global Keyboard Shortcuts
+- **Role-based filtering**: Only shows shortcuts relevant to your user role (Admin, Data Entry, or Viewer)
 - **No browser conflicts**: Uses `Alt` key for most shortcuts to avoid conflicts with browser shortcuts (Ctrl+N, Ctrl+T, Ctrl+R, etc.)
 - **Cross-platform support**: Automatically detects Mac (⌥) vs Windows/Linux (Alt) modifiers
 - **Smart context awareness**: Shortcuts are disabled when typing in input fields (except Escape and `/`)
@@ -16,7 +17,7 @@ The application includes a comprehensive keyboard shortcuts system that allows u
 - **Help dialog**: Press `Ctrl+K` / `⌘+K` to view all available shortcuts
 
 ### 2. Keyboard Shortcuts Button
-A dedicated button in the header (keyboard icon) provides quick access to the keyboard shortcuts help dialog.
+A dedicated button in the header (keyboard icon) provides quick access to the keyboard shortcuts help dialog. The dialog automatically shows only shortcuts available to your user role.
 
 ### 3. Styled with shadcn/ui kbd Component
 All keyboard shortcuts are styled using the `Kbd` and `KbdGroup` components from shadcn/ui for consistent visual appearance.
@@ -24,31 +25,31 @@ All keyboard shortcuts are styled using the `Kbd` and `KbdGroup` components from
 ## Available Shortcuts
 
 ### Navigation Shortcuts
-| Shortcut | Action | Description |
+| Shortcut | Action | Who Can See |
 |----------|--------|-------------|
-| `Alt+D` / `⌥+D` | Dashboard | Navigate to the Dashboard page |
-| `Alt+E` / `⌥+E` | Entries | Navigate to the Entries page |
-| `Alt+R` / `⌥+R` | Reports | Navigate to the Reports page |
-| `Ctrl+Shift+U` / `⌘+Shift+U` | User Management | Navigate to User Management (Admin only) |
-| `Ctrl+Shift+A` / `⌘+Shift+A` | Audit Log | Navigate to Audit Log (Admin only) |
-| `Ctrl+Shift+S` / `⌘+Shift+S` | System Settings | Navigate to System Settings (Admin only) |
+| `Alt+D` / `⌥+D` | Dashboard | All users |
+| `Alt+E` / `⌥+E` | Entries | All users |
+| `Alt+R` / `⌥+R` | Reports | All users |
+| `Ctrl+Shift+U` / `⌘+Shift+U` | User Management | **Admin only** |
+| `Ctrl+Shift+A` / `⌘+Shift+A` | Audit Log | **Admin only** |
+| `Ctrl+Shift+S` / `⌘+Shift+S` | System Settings | **Admin only** |
 
 ### Action Shortcuts
-| Shortcut | Action | Description |
+| Shortcut | Action | Who Can See |
 |----------|--------|-------------|
-| `Alt+N` / `⌥+N` | New Entry | Create a new registry entry (requires write permission) |
+| `Alt+N` / `⌥+N` | New Entry | **Admin & Data Entry only** |
 
 ### UI Shortcuts
-| Shortcut | Action | Description |
+| Shortcut | Action | Who Can See |
 |----------|--------|-------------|
-| `Alt+T` / `⌥+T` | Toggle Theme | Switch between light and dark theme |
-| `Alt+B` / `⌥+B` | Toggle Sidebar | Show/hide the sidebar |
-| `Ctrl+K` / `⌘+K` | Show Shortcuts | Display the keyboard shortcuts help dialog |
+| `Alt+T` / `⌥+T` | Toggle Theme | All users |
+| `Alt+B` / `⌥+B` | Toggle Sidebar | All users |
+| `Ctrl+K` / `⌘+K` | Show Shortcuts | All users |
 
 ### Search Shortcuts
-| Shortcut | Action | Description |
+| Shortcut | Action | Who Can See |
 |----------|--------|-------------|
-| `/` | Focus Search | Focus and select the search input field (just press `/`)|
+| `/` | Focus Search | All users |
 
 ## Implementation Details
 
@@ -67,9 +68,10 @@ All keyboard shortcuts are styled using the `Kbd` and `KbdGroup` components from
 - Renders the keyboard shortcuts help dialog
 
 #### 3. `keyboard-shortcuts-dialog.tsx` (Dialog)
-- Modal dialog that displays all available shortcuts
+- Modal dialog that displays shortcuts available to the user's role
 - Groups shortcuts by category (Navigation, Actions, UI, Search)
 - Shows platform-specific modifier keys (⌘ for Mac, Ctrl for others)
+- Displays a personalization notice showing the user's current role
 - Automatically opens/closes via custom event
 
 #### 4. `keyboard-shortcuts-button.tsx` (Button)
@@ -81,6 +83,27 @@ All keyboard shortcuts are styled using the `Kbd` and `KbdGroup` components from
 - Styled keyboard key component
 - Provides `Kbd` for individual keys
 - Provides `KbdGroup` for key combinations
+
+### Role-Based Filtering
+
+The keyboard shortcuts system automatically filters shortcuts based on user roles:
+
+**Admin Users** see:
+- All navigation shortcuts (Dashboard, Entries, Reports, User Management, Audit Log, System Settings)
+- Create New Entry action
+- All UI shortcuts
+- All search shortcuts
+
+**Data Entry Users** see:
+- Basic navigation shortcuts (Dashboard, Entries, Reports)
+- Create New Entry action
+- All UI shortcuts
+- All search shortcuts
+
+**Viewer Users** see:
+- Basic navigation shortcuts (Dashboard, Entries, Reports)
+- All UI shortcuts
+- All search shortcuts
 
 ### Integration Points
 
@@ -149,11 +172,12 @@ import { Kbd, KbdGroup } from '@/components/ui/kbd'
 
 ### For Users
 
-1. Press `Ctrl+K` / `⌘+K` anytime to view all available shortcuts
+1. Press `Ctrl+K` / `⌘+K` anytime to view shortcuts available to your role
 2. Click the keyboard icon in the header to view shortcuts
 3. Look for keyboard shortcut indicators on buttons (shown on larger screens)
 4. Most navigation shortcuts use `Alt` key to avoid conflicts with your browser
 5. Shortcuts work globally except when typing in text fields (you can still use `/` for search and `Escape` to close dialogs)
+6. The shortcuts you see depend on your user role (Admin, Data Entry, or Viewer)
 
 ## Accessibility
 
@@ -186,10 +210,11 @@ To test keyboard shortcuts:
 
 ## Notes
 
+- **Role-Based Access**: Shortcuts are filtered based on your user role. Admin-only shortcuts won't appear for non-admin users, and write-action shortcuts won't appear for viewers
 - **Browser Conflict Avoidance**: Main navigation shortcuts use `Alt` (⌥ on Mac) to prevent conflicts with browser shortcuts like `Ctrl+N` (new window), `Ctrl+T` (new tab), and `Ctrl+R` (reload)
 - The `Ctrl` key on Windows/Linux maps to `Cmd` (⌘) on Mac automatically
 - The `Alt` key on Windows/Linux maps to `Option` (⌥) on Mac automatically
-- Admin-only shortcuts will navigate to admin pages but access control is enforced server-side
+- Access control is enforced both client-side (shortcut visibility) and server-side (page access)
 - The system uses custom events for communication between components
 - Search shortcut (`/`) is inspired by common patterns in apps like GitHub, Gmail, and Slack
 

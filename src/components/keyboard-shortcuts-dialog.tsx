@@ -13,9 +13,13 @@ import { Kbd, KbdGroup } from '@/components/ui/kbd'
 import { Separator } from '@/components/ui/separator'
 import { useGlobalKeyboardShortcuts, type KeyboardShortcut } from '@/hooks/use-keyboard-shortcuts'
 
-export function KeyboardShortcutsDialog() {
+type KeyboardShortcutsDialogProps = {
+  userRole?: string | null
+}
+
+export function KeyboardShortcutsDialog({ userRole }: KeyboardShortcutsDialogProps) {
   const [open, setOpen] = useState(false)
-  const shortcuts = useGlobalKeyboardShortcuts()
+  const shortcuts = useGlobalKeyboardShortcuts(userRole)
 
   useEffect(() => {
     const handleToggle = () => setOpen((prev) => !prev)
@@ -100,16 +104,25 @@ export function KeyboardShortcutsDialog() {
           ))}
         </div>
 
-        <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
-          <p className="text-xs text-muted-foreground">
-            <strong className="text-foreground">Tip:</strong> Press{' '}
-            <KbdGroup className="mx-1">
-              <Kbd>{modifierKey}</Kbd>
-              <span className="text-muted-foreground">+</span>
-              <Kbd>K</Kbd>
-            </KbdGroup>{' '}
-            to quickly access this shortcuts dialog anytime.
-          </p>
+        <div className="space-y-3">
+          <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
+            <p className="text-xs text-muted-foreground">
+              <strong className="text-foreground">Tip:</strong> Press{' '}
+              <KbdGroup className="mx-1">
+                <Kbd>{modifierKey}</Kbd>
+                <span className="text-muted-foreground">+</span>
+                <Kbd>K</Kbd>
+              </KbdGroup>{' '}
+              to quickly access this shortcuts dialog anytime.
+            </p>
+          </div>
+          {userRole && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/50 dark:bg-blue-950/20">
+              <p className="text-xs text-blue-900 dark:text-blue-200">
+                <strong className="text-blue-950 dark:text-blue-100">Personalized:</strong> Shortcuts shown are tailored to your role ({userRole === 'ADMIN' ? 'Administrator' : userRole === 'DATA_ENTRY' ? 'Data Entry' : 'Viewer'}).
+              </p>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
