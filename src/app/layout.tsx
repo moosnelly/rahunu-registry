@@ -17,7 +17,7 @@ import { KeyboardShortcutsProvider } from "@/components/keyboard-shortcuts-provi
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Secretariat of Addu City Council",
+  title: "Rahunu Registry",
   description: "Loan registry management portal",
 };
 
@@ -48,7 +48,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                         <Separator orientation="vertical" className="h-6" />
                         <Link href="/dashboard" className="flex items-center gap-2">
                           <img src="/addu-logo.png" alt="City of Addu Logo" className="h-9 w-auto" />
-                          <span className="text-base font-semibold sm:text-lg">Secretariat of Addu City Council</span>
+                          <span className="text-base font-semibold sm:text-lg">Rahunu Registry</span>
                         </Link>
                       </div>
                       <div className="flex items-center gap-2">
@@ -64,16 +64,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   </SidebarInset>
                 </SidebarProvider>
               ) : (
-                <div className="flex min-h-screen flex-col bg-background">
-                  <header className="flex items-center justify-center px-6 py-10">
-                    <div className="flex items-center gap-2">
-                      <img src="/addu-logo.png" alt="City of Addu Logo" className="h-10 w-auto" />
-                      <span className="text-lg font-semibold">Secretariat of Addu City Council</span>
-                    </div>
-                  </header>
-                  <main className="flex flex-1 items-center justify-center px-4 pb-16">
-                    {children}
-                  </main>
+                <div className="flex min-h-screen items-center justify-center bg-background px-4">
+                  {children}
                 </div>
               )}
             </KeyboardShortcutsProvider>
