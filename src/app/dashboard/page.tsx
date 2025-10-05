@@ -8,6 +8,7 @@ import { fetchSummary } from "@/lib/reports";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import {
   Card,
   CardContent,
@@ -105,23 +106,38 @@ export default async function Page() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="gap-2">
             <Link href="/entries">
               <FileText className="h-4 w-4" />
-              View Entries
+              <span>View Entries</span>
+              <KbdGroup className="ml-1 hidden xl:inline-flex">
+                <Kbd>Alt</Kbd>
+                <span className="text-muted-foreground">+</span>
+                <Kbd>E</Kbd>
+              </KbdGroup>
             </Link>
           </Button>
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="gap-2">
             <Link href="/reports">
               <BarChart3 className="h-4 w-4" />
-              Reports
+              <span>Reports</span>
+              <KbdGroup className="ml-1 hidden xl:inline-flex">
+                <Kbd>Alt</Kbd>
+                <span className="text-muted-foreground">+</span>
+                <Kbd>R</Kbd>
+              </KbdGroup>
             </Link>
           </Button>
           {canWrite(role) ? (
-            <Button asChild>
+            <Button asChild className="gap-2">
               <Link href="/entries/new">
                 <PlusCircle className="h-4 w-4" />
-                Create New Entry
+                <span>Create New Entry</span>
+                <KbdGroup className="ml-1 hidden xl:inline-flex">
+                  <Kbd>Alt</Kbd>
+                  <span className="text-muted-foreground">+</span>
+                  <Kbd>N</Kbd>
+                </KbdGroup>
               </Link>
             </Button>
           ) : null}

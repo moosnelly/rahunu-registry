@@ -9,10 +9,6 @@ export default async function Home() {
     redirect("/auth/signin");
   }
 
-  return (
-    <main className="space-y-4">
-      <h1 className="text-3xl font-semibold text-foreground">Dashboard</h1>
-      <p className="text-sm text-muted-foreground">Welcome back to the Secretariat of Addu City Council portal.</p>
-    </main>
-  );
+  // Authenticated users should go to dashboard
+  redirect("/dashboard");
 }
