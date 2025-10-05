@@ -11,6 +11,7 @@ import { CalendarIcon, Download, Edit, Eye, ExternalLink, FileText, History, Mor
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Kbd, KbdGroup } from '@/components/ui/kbd';
 import {
   Card,
   CardContent,
@@ -385,8 +386,15 @@ export default function EntriesPage() {
           </p>
         </div>
         {canWrite ? (
-          <Button asChild>
-            <Link href="/entries/new">New Entry</Link>
+          <Button asChild className="gap-2">
+            <Link href="/entries/new">
+              <span>New Entry</span>
+              <KbdGroup className="ml-1 hidden sm:inline-flex">
+                <Kbd>Ctrl</Kbd>
+                <span className="text-muted-foreground">+</span>
+                <Kbd>N</Kbd>
+              </KbdGroup>
+            </Link>
           </Button>
         ) : null}
       </div>
@@ -407,7 +415,7 @@ export default function EntriesPage() {
                   value={filters.query}
                   onChange={(event) => handleFilterChange('query', event.target.value)}
                   placeholder="Search by Agreement Number, Borrower Name/ID"
-                  className="h-11 rounded-xl pl-10"
+                  className="h-11 rounded-xl pl-10 pr-24"
                 />
                 {filters.query ? (
                   <button
@@ -418,7 +426,15 @@ export default function EntriesPage() {
                   >
                     <XIcon className="h-4 w-4" />
                   </button>
-                ) : null}
+                ) : (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden lg:flex">
+                    <KbdGroup>
+                      <Kbd>Ctrl</Kbd>
+                      <span className="text-muted-foreground">+</span>
+                      <Kbd>/</Kbd>
+                    </KbdGroup>
+                  </div>
+                )}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm text-muted-foreground">{total.toLocaleString()} results</span>
