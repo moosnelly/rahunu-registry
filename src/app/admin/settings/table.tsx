@@ -24,6 +24,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Settings } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
@@ -631,8 +633,18 @@ export default function SettingsClient() {
                         ))
                       ) : filteredSettings.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="py-12 text-center text-sm text-muted-foreground">
-                            No {categoryLabels[category].toLowerCase()} found. Add one above to get started.
+                          <TableCell colSpan={5} className="p-0">
+                            <Empty className="border-0">
+                              <EmptyHeader>
+                                <EmptyMedia variant="icon">
+                                  <Settings />
+                                </EmptyMedia>
+                                <EmptyTitle>No {categoryLabels[category]} Found</EmptyTitle>
+                                <EmptyDescription>
+                                  Add a new {categoryLabels[category].toLowerCase()} using the form above to get started.
+                                </EmptyDescription>
+                              </EmptyHeader>
+                            </Empty>
                           </TableCell>
                         </TableRow>
                       ) : (
