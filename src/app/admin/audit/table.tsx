@@ -33,6 +33,8 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { actionBadgeStyles, formatActionLabel, formatAuditDetails } from './utils';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { FileText } from 'lucide-react';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -239,8 +241,18 @@ export default function AuditClient() {
                       </div>
                     ))
                   ) : isEmpty ? (
-                    <div className="rounded-lg border border-border/60 bg-muted/50 p-6 text-center text-sm text-muted-foreground sm:col-span-2">
-                      No audit events match the current filters.
+                    <div className="sm:col-span-2">
+                      <Empty className="border-0">
+                        <EmptyHeader>
+                          <EmptyMedia variant="icon">
+                            <FileText />
+                          </EmptyMedia>
+                          <EmptyTitle>No Audit Events Found</EmptyTitle>
+                          <EmptyDescription>
+                            No audit events match the current filters. Try adjusting your search criteria.
+                          </EmptyDescription>
+                        </EmptyHeader>
+                      </Empty>
                     </div>
                   ) : (
                     logs.map((log: any, idx: number) => {

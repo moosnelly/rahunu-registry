@@ -24,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { ArrowUpRight, BarChart3, ClipboardList, FileText, MapPin, PlusCircle } from "lucide-react";
 
 export const revalidate = 60;
@@ -263,9 +264,17 @@ export default async function Page() {
         </CardHeader>
         <CardContent className="px-0">
           {recentEntries.length === 0 ? (
-            <div className="px-6 py-12 text-sm text-muted-foreground">
-              No recent activity. Start by creating a new entry.
-            </div>
+            <Empty className="border-0 my-6">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <ClipboardList />
+                </EmptyMedia>
+                <EmptyTitle>No Recent Activity</EmptyTitle>
+                <EmptyDescription>
+                  Start by creating a new registry entry.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <div className="overflow-x-auto">
               <Table>

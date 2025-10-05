@@ -30,6 +30,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   DropdownMenu,
@@ -543,8 +544,25 @@ export default function EntriesPage() {
                   ))
                 ) : items.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">
-                      No entries found. {canWrite ? 'Create a new registry entry to get started.' : ''}
+                    <TableCell colSpan={8} className="p-0">
+                      <Empty className="border-0">
+                        <EmptyHeader>
+                          <EmptyMedia variant="icon">
+                            <FileText />
+                          </EmptyMedia>
+                          <EmptyTitle>No Entries Found</EmptyTitle>
+                          <EmptyDescription>
+                            {canWrite ? 'Create a new registry entry to get started.' : 'No registry entries are available at the moment.'}
+                          </EmptyDescription>
+                        </EmptyHeader>
+                        {canWrite && (
+                          <EmptyContent>
+                            <Button asChild size="sm">
+                              <Link href="/entries/new">Create New Entry</Link>
+                            </Button>
+                          </EmptyContent>
+                        )}
+                      </Empty>
                     </TableCell>
                   </TableRow>
                 ) : (

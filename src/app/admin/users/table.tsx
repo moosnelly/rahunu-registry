@@ -23,6 +23,8 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Users } from 'lucide-react';
 
 type CreateUserState = {
   name: string;
@@ -254,8 +256,18 @@ export default function AdminUsersClient() {
                   ))
                 ) : users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="py-12 text-center text-sm text-muted-foreground">
-                      No users found.
+                    <TableCell colSpan={5} className="p-0">
+                      <Empty className="border-0">
+                        <EmptyHeader>
+                          <EmptyMedia variant="icon">
+                            <Users />
+                          </EmptyMedia>
+                          <EmptyTitle>No Users Found</EmptyTitle>
+                          <EmptyDescription>
+                            Create a new user using the form above to get started.
+                          </EmptyDescription>
+                        </EmptyHeader>
+                      </Empty>
                     </TableCell>
                   </TableRow>
                 ) : (
