@@ -85,10 +85,43 @@ export function useGlobalKeyboardShortcuts(userRole?: string | null) {
 
   const focusSearch = useCallback(() => {
     // Focus on search input if it exists
-    const searchInput = document.querySelector('input[type="text"], input[type="search"]') as HTMLInputElement
+    // First try to find search inputs with common patterns (case-insensitive)
+    let searchInput = document.querySelector('input[placeholder*="Search" i], input[placeholder*="search" i]') as HTMLInputElement
+
+    // If no search placeholder found, try by type and common patterns
+    if (!searchInput) {
+      searchInput = document.querySelector('input[type="text"], input[type="search"]') as HTMLInputElement
+    }
+
+    // Look for the specific search input used in entries page (with search icon)
+    if (!searchInput) {
+      searchInput = document.querySelector('.rounded-xl.pl-10.pr-24 input, input[placeholder*="Agreement Number"], input[placeholder*="Borrower"]') as HTMLInputElement
+    }
+
+    // If still no search input found, try to find any visible input that's not hidden or disabled
+    if (!searchInput) {
+      const allInputs = document.querySelectorAll('input[type="text"], input[type="search"], input:not([type])')
+      for (const input of allInputs) {
+        const style = window.getComputedStyle(input)
+        if (!input.hasAttribute('hidden') &&
+            !input.hasAttribute('disabled') &&
+            input.offsetParent !== null &&
+            style.display !== 'none' &&
+            style.visibility !== 'hidden') {
+          searchInput = input as HTMLInputElement
+          break
+        }
+      }
+    }
+
     if (searchInput) {
       searchInput.focus()
       searchInput.select()
+      // Add a small visual indicator that the shortcut worked
+      searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      console.log('✅ Focused search input:', searchInput.placeholder || searchInput.type || 'unnamed input')
+    } else {
+      console.log('❌ No search input found to focus')
     }
   }, [])
 
