@@ -390,7 +390,7 @@ export default function EntriesPage() {
             <Link href="/entries/new">
               <span>New Entry</span>
               <KbdGroup className="ml-1 hidden sm:inline-flex">
-                <Kbd>Ctrl</Kbd>
+                <Kbd>Alt</Kbd>
                 <span className="text-muted-foreground">+</span>
                 <Kbd>N</Kbd>
               </KbdGroup>
@@ -428,11 +428,7 @@ export default function EntriesPage() {
                   </button>
                 ) : (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden lg:flex">
-                    <KbdGroup>
-                      <Kbd>Ctrl</Kbd>
-                      <span className="text-muted-foreground">+</span>
-                      <Kbd>/</Kbd>
-                    </KbdGroup>
+                    <Kbd>/</Kbd>
                   </div>
                 )}
               </div>

@@ -93,24 +93,24 @@ export function useGlobalKeyboardShortcuts() {
   }, [])
 
   const shortcuts: KeyboardShortcut[] = [
-    // Navigation shortcuts
+    // Navigation shortcuts (using Alt to avoid browser conflicts)
     {
       key: 'd',
-      ctrl: true,
+      alt: true,
       description: 'Go to Dashboard',
       action: () => router.push('/dashboard'),
       category: 'Navigation',
     },
     {
       key: 'e',
-      ctrl: true,
+      alt: true,
       description: 'Go to Entries',
       action: () => router.push('/entries'),
       category: 'Navigation',
     },
     {
       key: 'r',
-      ctrl: true,
+      alt: true,
       description: 'Go to Reports',
       action: () => router.push('/reports'),
       category: 'Navigation',
@@ -142,7 +142,7 @@ export function useGlobalKeyboardShortcuts() {
     // Action shortcuts
     {
       key: 'n',
-      ctrl: true,
+      alt: true,
       description: 'Create New Entry',
       action: () => router.push('/entries/new'),
       category: 'Actions',
@@ -150,14 +150,14 @@ export function useGlobalKeyboardShortcuts() {
     // UI shortcuts
     {
       key: 't',
-      ctrl: true,
+      alt: true,
       description: 'Toggle Theme (Light/Dark)',
       action: toggleTheme,
       category: 'UI',
     },
     {
       key: 'b',
-      ctrl: true,
+      alt: true,
       description: 'Toggle Sidebar',
       action: toggleSidebar,
       category: 'UI',
@@ -165,7 +165,6 @@ export function useGlobalKeyboardShortcuts() {
     // Search shortcuts
     {
       key: '/',
-      ctrl: true,
       description: 'Focus Search Input',
       action: focusSearch,
       category: 'Search',

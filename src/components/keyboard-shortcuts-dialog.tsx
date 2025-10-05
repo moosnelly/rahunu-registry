@@ -70,15 +70,15 @@ export function KeyboardShortcutsDialog() {
                   >
                     <span className="text-sm text-foreground">{shortcut.description}</span>
                     <KbdGroup>
-                      {shortcut.ctrl && (
-                        <>
-                          <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
-                          <span className="text-muted-foreground">+</span>
-                        </>
-                      )}
                       {shortcut.alt && (
                         <>
                           <Kbd>{isMac ? '⌥' : 'Alt'}</Kbd>
+                          <span className="text-muted-foreground">+</span>
+                        </>
+                      )}
+                      {shortcut.ctrl && (
+                        <>
+                          <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
                           <span className="text-muted-foreground">+</span>
                         </>
                       )}

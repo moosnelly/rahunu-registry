@@ -111,7 +111,7 @@ export default async function Page() {
               <FileText className="h-4 w-4" />
               <span>View Entries</span>
               <KbdGroup className="ml-1 hidden xl:inline-flex">
-                <Kbd>Ctrl</Kbd>
+                <Kbd>Alt</Kbd>
                 <span className="text-muted-foreground">+</span>
                 <Kbd>E</Kbd>
               </KbdGroup>
@@ -122,7 +122,7 @@ export default async function Page() {
               <BarChart3 className="h-4 w-4" />
               <span>Reports</span>
               <KbdGroup className="ml-1 hidden xl:inline-flex">
-                <Kbd>Ctrl</Kbd>
+                <Kbd>Alt</Kbd>
                 <span className="text-muted-foreground">+</span>
                 <Kbd>R</Kbd>
               </KbdGroup>
@@ -134,7 +134,7 @@ export default async function Page() {
                 <PlusCircle className="h-4 w-4" />
                 <span>Create New Entry</span>
                 <KbdGroup className="ml-1 hidden xl:inline-flex">
-                  <Kbd>Ctrl</Kbd>
+                  <Kbd>Alt</Kbd>
                   <span className="text-muted-foreground">+</span>
                   <Kbd>N</Kbd>
                 </KbdGroup>
