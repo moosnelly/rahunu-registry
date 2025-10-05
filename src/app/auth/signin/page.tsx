@@ -45,11 +45,14 @@ export default function SignInPage() {
 
   return (
     <div className="w-full max-w-md space-y-8">
-      <div className="flex flex-col space-y-2 text-center">
-        <h1 className="text-3xl font-bold tracking-tight">Rahunu Registry</h1>
-        <p className="text-sm text-muted-foreground">
-          Enter your credentials to access the registry system
-        </p>
+      <div className="flex flex-col items-center space-y-4 text-center">
+        <img src="/addu-logo.png" alt="City of Addu Logo" className="h-16 w-auto" />
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Rahunu Registry</h1>
+          <p className="text-sm text-muted-foreground">
+            Enter your credentials to access the registry system
+          </p>
+        </div>
       </div>
       
       <Card className="border-border shadow-lg">
